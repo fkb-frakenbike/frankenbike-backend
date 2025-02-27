@@ -1,0 +1,55 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+# Ignore .env files (DO NOT commit sensitive credentials)
+.env
+# Ignore MySQL database files (Docker volumes)
+mysql_data/
+sql/
+*.sql
+# Ignore log files
+logs/
+*.log
+nohup.out
+# Ignore Docker-related files
+docker-compose.override.yml
+docker-compose.logs
+docker-compose.debug.yml
+.Dockerfile.swp
+*.pid
+*.sock
+# Ignore node_modules for the frontend
+front/node_modules/
+front/.next/
+front/.nuxt/
+front/dist/
+front/build/
+# Ignore vendor & dependencies for the backend
+back/vendor/
+back/var/
+back/node_modules/
+# Ignore Symfony cache and logs
+back/var/cache/
+back/var/log/
+back/var/sessions/
+# Ignore IDE/editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+# Ignore system files (macOS & Linux)
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+# Ignore Git merge conflict files
+*.orig
