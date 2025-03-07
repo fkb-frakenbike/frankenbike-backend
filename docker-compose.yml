@@ -20,7 +20,7 @@ services:
 
   php:
     build:
-      context: ./dockerfile/php
+      context: ./docker/php
       dockerfile: Dockerfile
     container_name: fkb-php
     restart: always
@@ -29,6 +29,8 @@ services:
       - .:/var/www/html
     depends_on:
       - mysql
+    ports:
+      - "8787:8000" 
 
 volumes:
   mysql_data:
