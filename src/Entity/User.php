@@ -14,22 +14,24 @@ class User
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    #[ORM\Column(type: 'string', length: 20, enumType: UserRole::class, options: ['default' => UserRole::USER])]
+    // Map to the "role" column in your DB
+    #[ORM\Column(name: "role", type: "string", length: 20, enumType: UserRole::class, options: ['default' => UserRole::USER])]
     private UserRole $role = UserRole::USER;
 
-    #[ORM\Column(type: 'datetime')]
+    // Add the created_at column from the database
+    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
     private \DateTime $createdAt;
 
     /**
