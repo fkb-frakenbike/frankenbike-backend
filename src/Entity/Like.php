@@ -7,7 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LikeRepository::class)]
-#[ORM\Table(name: '`like`')]
+#[ORM\Table(name: "likes")]
 class Like
 {
     #[ORM\Id]
