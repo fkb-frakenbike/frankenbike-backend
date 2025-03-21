@@ -20,7 +20,7 @@ services:
 
   php:
     build:
-      context: ./docker/php
+      context: ./docker/php/
       dockerfile: Dockerfile
     container_name: fkb-php
     restart: always
