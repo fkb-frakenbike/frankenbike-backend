@@ -18,11 +18,16 @@ class Image
     #[ORM\Column(length: 255)]
     private ?string $url = null;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $created_at = null;
+    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTime $createdAt;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private ?\DateTimeImmutable $uploaded_at = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -37,30 +42,6 @@ class Image
     public function setUrl(string $url): static
     {
         $this->url = $url;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
-    public function getUploadedAt(): ?\DateTimeImmutable
-    {
-        return $this->uploaded_at;
-    }
-
-    public function setUploadedAt(\DateTimeImmutable $uploaded_at): static
-    {
-        $this->uploaded_at = $uploaded_at;
 
         return $this;
     }

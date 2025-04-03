@@ -8,9 +8,13 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Enum\UserRole;
 
+// 1. Import these interfaces from Symfony Security
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: "users")]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -24,8 +28,8 @@ class User
     private ?string $password = null;
 
     // Map to the "role" column in your DB
-    #[ORM\Column(name: "role", type: "string", length: 20, enumType: UserRole::class, options: ['default' => UserRole::USER])]
-    private UserRole $role = UserRole::USER;
+    #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
+    private ?string $role = 'user';
 
     // Add the created_at column from the database
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
@@ -154,5 +158,21 @@ class User
         }
 
         return $this;
+    }
+    // Required by UserInterface
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    // Required by UserInterface
+    public function getRoles(): array
+    {
+        return ['ROLE_' . strtoupper($this->role->value)];
+    }
+
+    // Required by UserInterface
+    public function eraseCredentials(): void
+    {
     }
 }

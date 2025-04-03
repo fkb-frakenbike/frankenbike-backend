@@ -21,7 +21,6 @@ final class UserController extends AbstractController
 
         // Create new User entity and set its properties
         $user = new User();
-        $user->setName($data['name']);
         $user->setEmail($data['email']);
         $user->setPassword($data['password']);
         // ... set other User fields as needed
