@@ -8,12 +8,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
 
 final class UserController extends AbstractController
 {
     #[Route('/users', name: 'create_user', methods: ['POST'])]
-    public function createUser(Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    public function createUser(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse 
     {
         // Parse JSON request data
         $data = json_decode($request->getContent(), true);
@@ -22,8 +24,8 @@ final class UserController extends AbstractController
         // Create new User entity and set its properties
         $user = new User();
         $user->setEmail($data['email']);
-        $user->setPassword($data['password']);
-        // ... set other User fields as needed
+        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
 
         // Save the new user to the database
         $em->persist($user);

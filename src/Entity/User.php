@@ -47,12 +47,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
     private Collection $likes;
 
+    /**
+     * @var Collection<int, Profile>
+     */
+    #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user')]
+    private Collection $profiles;
+
+    /**
+     * @var Collection<int, Comment>
+     */
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'user')]
+    private Collection $comments;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
-        $this->role = UserRole::USER; // explicit default
         $this->projects = new ArrayCollection();
         $this->likes = new ArrayCollection();
+        $this->profiles = new ArrayCollection();
+        $this->comments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -84,17 +97,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getRole(): UserRole
+    public function getRole(): string
     {
-        return $this->role;
+        return $this->role ?? 'user';
     }
-
-    public function setRole(UserRole $role): static
+    
+    public function setRole(string $role): static
     {
         $this->role = $role;
         return $this;
     }
-    
+
     public function getCreatedAt(): \DateTime
     {
         return $this->createdAt;
@@ -159,20 +172,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
     // Required by UserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    // Required by UserInterface
+    // Symfony Security stuff:
     public function getRoles(): array
     {
-        return ['ROLE_' . strtoupper($this->role->value)];
+        // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
+        return ['ROLE_' . strtoupper($this->getRole())];
     }
-
-    // Required by UserInterface
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 }

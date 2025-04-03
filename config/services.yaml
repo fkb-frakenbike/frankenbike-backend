@@ -6,6 +6,12 @@
 parameters:
 
 services:
+    # Create a real (non-abstract) service named "App\Security\CustomJWTAuthenticator"
+    app.custom_jwt_authenticator:
+        class: App\Security\CustomJWTAuthenticator
+        parent: lexik_jwt_authentication.security.jwt_authenticator
+        autoconfigure: false  # use parent definitions
+    # no extra arguments usually needed
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

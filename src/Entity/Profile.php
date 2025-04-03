@@ -27,7 +27,7 @@ class Profile
     #[ORM\Column(name: "last_name", length: 255)]
     private ?string $lastName = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(type: "date")]
     private ?string $birthdate = null;
 
     #[ORM\Column(name: "photo_url", length: 255)]
@@ -58,7 +58,6 @@ class Profile
     public function setUser(?User $user): static
     {
         $this->user = $user;
-
         return $this;
     }
 
@@ -98,7 +97,7 @@ class Profile
         return $this;
     }
 
-    public function getBirthdate(): ?string
+    public function getBirthdate(): ?\DateTime
     {
         return $this->birthdate;
     }
