@@ -29,5 +29,5 @@ security:
         - { path: ^/users, roles: PUBLIC_ACCESS, methods: [POST] }
 
         # Everything else requires authentication
-        - { path: ^/, roles: ROLE_USER }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
