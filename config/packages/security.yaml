@@ -20,6 +20,7 @@ security:
             provider: app_user_provider    # your user provider (e.g., Entity User provider)
             jwt:
                 authenticator: app.custom_jwt_authenticator
+            logout: true # activates a "listener" that looks for any requests to /logout.
 
     access_control:
         # Allow login without a token
@@ -29,5 +30,5 @@ security:
         - { path: ^/users, roles: PUBLIC_ACCESS, methods: [POST] }
 
         # Everything else requires authentication
-        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/, roles: PUBLIC_ACCESS }
 

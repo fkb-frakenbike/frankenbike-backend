@@ -19,7 +19,8 @@ class AuthController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
         JWTTokenManagerInterface $jwtManager
-    ): JsonResponse {
+    ): JsonResponse 
+    {
         $data = json_decode($request->getContent(), true);
 
         $email = $data['email'] ?? null;
@@ -42,5 +43,10 @@ class AuthController extends AbstractController
 
         // Return it in JSON
         return new JsonResponse(['token' => $token], 200);
+    }
+
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(){
+        throw new \Exception("Logout(): should never be reached");
     }
 }
