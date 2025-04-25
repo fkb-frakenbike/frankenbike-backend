@@ -27,6 +27,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
+    private ?string $plainPassword = null;
+
     // Map to the "role" column in your DB
     #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
     private ?string $role = 'user';
@@ -93,6 +95,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -185,5 +199,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
         return ['ROLE_' . strtoupper($this->getRole())];
     }
-    public function eraseCredentials(): void {}
+    public function eraseCredentials(): void 
+    {
+        $this->plainPassword = null; //a safe thing to do
+    }
 }
