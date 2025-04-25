@@ -5,8 +5,8 @@ namespace App\Entity;
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: "projects")]
@@ -18,31 +18,39 @@ class Project
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
+    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?User $user = null;
 
     #[ORM\Column(length: 100)]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $created_at = null;
+    // Add the created_at column from the database
+    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTime $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updated_at = null;
+    #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTime $updatedAt;
 
     /**
-     * @var Collection<int, Like>
+     * A project can have multiple comments
      */
-    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'project')]
-    private Collection $likes;
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"])]
+    private Collection $comments;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    private ?Image $images = null;
+    /**
+     * A project can have multiple likes (some might be user-likes referencing this project)
+     */
+    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"])]
+    private Collection $likes;
 
     public function __construct()
     {
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
+        //$this->comments = new ArrayCollection();
         $this->likes = new ArrayCollection();
     }
 
@@ -87,26 +95,26 @@ class Project
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTime
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $created_at): static
+    public function setCreatedAt(\DateTime $createdAt): static
     {
-        $this->created_at = $created_at;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTime
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeInterface $updated_at): static
+    public function setUpdatedAt(\DateTime $updatedAt): static
     {
-        $this->updated_at = $updated_at;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }
@@ -141,15 +149,5 @@ class Project
         return $this;
     }
 
-    public function getImages(): ?Image
-    {
-        return $this->images;
-    }
 
-    public function setImages(?Image $images): static
-    {
-        $this->images = $images;
-
-        return $this;
-    }
 }

@@ -22,7 +22,7 @@ class Like
     private ?Project $project = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-    private ?\DateTimeImmutable $likeAt = null;
+    private ?\DateTime $created_at = null;
 
     public function getId(): ?int
     {
@@ -53,14 +53,14 @@ class Like
         return $this;
     }
 
-    public function getLikeAt(): ?\DateTimeImmutable
+    public function getCreated_at(): ?\DateTime
     {
-        return $this->likeAt;
+        return $this->created_at;
     }
 
-    public function setLikeAt(\DateTimeImmutable $likeAt): static
+    public function setCreated_at(\DateTime $created_at): static
     {
-        $this->likeAt = $likeAt;
+        $this->created_at = $created_at;
 
         return $this;
     }

@@ -8,9 +8,13 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Enum\UserRole;
 
+// 1. Import these interfaces from Symfony Security
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: "users")]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -23,9 +27,11 @@ class User
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
+    private ?string $plainPassword = null;
+
     // Map to the "role" column in your DB
-    #[ORM\Column(name: "role", type: "string", length: 20, enumType: UserRole::class, options: ['default' => UserRole::USER])]
-    private UserRole $role = UserRole::USER;
+    #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
+    private ?string $role = 'user';
 
     // Add the created_at column from the database
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
@@ -43,12 +49,25 @@ class User
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
     private Collection $likes;
 
+    /**
+     * @var Collection<int, Profile>
+     */
+    #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user')]
+    private Collection $profiles;
+
+    /**
+     * @var Collection<int, Comment>
+     */
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'user')]
+    private Collection $comments;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
-        $this->role = UserRole::USER; // explicit default
         $this->projects = new ArrayCollection();
         $this->likes = new ArrayCollection();
+        $this->profiles = new ArrayCollection();
+        $this->comments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -80,17 +99,29 @@ class User
         return $this;
     }
 
-    public function getRole(): UserRole
+    public function getPlainPassword(): ?string
     {
-        return $this->role;
+        return $this->plainPassword;
     }
 
-    public function setRole(UserRole $role): static
+    public function setPlainPassword(string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    public function getRole(): string
+    {
+        return $this->role ?? 'user';
+    }
+    
+    public function setRole(string $role): static
     {
         $this->role = $role;
         return $this;
     }
-    
+
     public function getCreatedAt(): \DateTime
     {
         return $this->createdAt;
@@ -154,5 +185,22 @@ class User
         }
 
         return $this;
+    }
+
+    // Required by UserInterface
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    // Symfony Security stuff:
+    public function getRoles(): array
+    {
+        // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
+        return ['ROLE_' . strtoupper($this->getRole())];
+    }
+    public function eraseCredentials(): void 
+    {
+        $this->plainPassword = null; //a safe thing to do
     }
 }

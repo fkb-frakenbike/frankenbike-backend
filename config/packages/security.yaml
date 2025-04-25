@@ -1,0 +1,35 @@
+security:
+    hide_user_not_found: false
+    
+    password_hashers:
+        App\Entity\User:
+            algorithm: auto
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        # for the Symfony profiler, etc.
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider    # your user provider (e.g., Entity User provider)
+            custom_authenticators:
+                - App\Security\CustomJWTAuthenticator
+            logout: true # activates a "listener" that looks for any requests to /logout.
+
+    access_control:
+        # Allow login without a token
+        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+
+        # Allow user registration without a token
+        - { path: ^/users, roles: PUBLIC_ACCESS, methods: [POST] }
+
+        # Everything else requires authentication
+        - { path: ^/, roles: PUBLIC_ACCESS }
