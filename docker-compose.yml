@@ -27,7 +27,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
-    command: ["bash", "-c", "php -S 0.0.0.0:8000 -t public"]
+    command: ["bash", "-c", "[ ! -d 'vendor' ] && composer install || echo 'Dependencies already installed'; php -S 0.0.0.0:8000 -t public"]
     depends_on:
       - mysql
     ports:
