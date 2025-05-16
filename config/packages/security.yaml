@@ -12,7 +12,6 @@ security:
                 property: email
 
     firewalls:
-        # for the Symfony profiler, etc.
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
@@ -26,29 +25,28 @@ security:
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        main:
+            pattern: ^/
+            security: true
+            provider: app_user_provider
             form_login:
                 login_path: app_login
                 check_path: app_login
                 enable_csrf: true
             logout:
                 path: app_logout
-                # where to redirect after logout
-                # target: app_any_route
+                target: app_login
 
         api:
             pattern: ^/api
             stateless: true
-            provider: app_user_provider    # your user provider (e.g., Entity User provider)
-            custom_authenticators:
-                - App\Security\CustomJWTAuthenticator
-            logout: true # activates a "listener" that looks for any requests to /logout.
+            provider: app_user_provider
 
     access_control:
-        # Allow login without a token
-        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-
-        # Allow user registration without a token
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/_profiler, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/users, roles: PUBLIC_ACCESS, methods: [POST] }
-
-        # Everything else requires authentication
-        - { path: ^/, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: IS_AUTHENTICATED_ANONYMOUSLY }
