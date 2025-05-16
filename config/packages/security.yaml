@@ -44,8 +44,8 @@ security:
             provider: app_user_provider
 
     access_control:
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/login$, roles: PUBLIC_ACCESS }
         - { path: ^/_profiler, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/users, roles: PUBLIC_ACCESS, methods: [POST] }
