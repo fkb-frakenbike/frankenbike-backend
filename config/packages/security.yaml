@@ -1,6 +1,6 @@
 security:
     # https://symfony.com/doc/current/security/authenticator_manager.html
-    enable_authenticator_manager: true
+    # enable_authenticator_manager: true
 
     hide_user_not_found: false
 
@@ -29,10 +29,6 @@ security:
                 password_parameter: password
                 enable_csrf: true
 
-            custom_authenticator:
-                #    - App\Security\LoginFormAuthenticator
-                - App\Security\CustomJWTAuthenticator
-
             logout: true
 
             remember_me:
@@ -46,6 +42,29 @@ security:
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
 
+        # ── API side (stateless JWT) ─────────────
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+
+            # Lexik JWT authenticator
+            jwt: ~
+
+            # acts as entry point when no token is present
+            entry_point: jwt
     # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+    # ─────────────────────────────────────────────
+    # Access rules
+    # ─────────────────────────────────────────────
     access_control:
+        # Allow unauthenticated calls ONLY to these two API endpoints
+        - { path: ^/api/login$,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
+
+        # Every other /api/* call needs a valid JWT
+        - { path: ^/api,         roles: IS_AUTHENTICATED_FULLY }
+
+        # HTML side
+        - { path: ^/admin,       roles: ROLE_ADMIN }
+        - { path: ^/,            roles: PUBLIC_ACCESS }   # homepage, login form, etc.
