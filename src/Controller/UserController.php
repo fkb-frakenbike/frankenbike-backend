@@ -27,6 +27,10 @@ final class UserController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
+        if (isset($data['role'])) {
+            $user->setRole($data['role']);
+        }
+
         // Save the new user to the database
         $em->persist($user);
         $em->flush();
@@ -44,7 +48,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/users/{id}', name: 'get_user', methods: ['GET'])]
+    #[Route('/user/{id}', name: 'get_user', methods: ['GET'])]
     public function getUserById(int $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
@@ -55,7 +59,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/users/{id}', name: 'delete_user', methods: ['DELETE'])]
+    #[Route('/user/{id}', name: 'delete_user', methods: ['DELETE'])]
     public function deleteUser(int $id, EntityManagerInterface $em): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
