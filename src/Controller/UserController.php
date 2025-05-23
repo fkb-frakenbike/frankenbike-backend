@@ -13,7 +13,7 @@ use App\Entity\User;
 
 final class UserController extends AbstractController
 {
-    #[Route('/users', name: 'create_user', methods: ['POST'])]
+    #[Route('/api/users', name: 'create_user', methods: ['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher
     ): JsonResponse 
     {
@@ -40,7 +40,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_CREATED, [], true);
     }
 
-    #[Route('/users', name: 'list_users', methods: ['GET'])]
+    #[Route('/api/users', name: 'list_users', methods: ['GET'])]
     public function getAllUsers(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $users = $em->getRepository(User::class)->findAll();
@@ -48,7 +48,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/user/{id}', name: 'get_user', methods: ['GET'])]
+    #[Route('/api/users/{id}', name: 'get_user', methods: ['GET'])]
     public function getUserById(int $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
@@ -59,7 +59,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/user/{id}', name: 'delete_user', methods: ['DELETE'])]
+    #[Route('/api/users/{id}', name: 'delete_user', methods: ['DELETE'])]
     public function deleteUser(int $id, EntityManagerInterface $em): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
