@@ -45,7 +45,7 @@ class AuthController extends AbstractController
         // Étape 4: Mettre le JWT dans un cookie sécurisé
         $response = new JsonResponse(['message' => 'Connected']);
         $response->headers->setCookie(
-            Cookie::create('AUTH_TOKEN', $token)
+            Cookie::create('AUTH_TOKEN_COOKIE', $token)
                 ->withHttpOnly(true)
                 ->withSecure(true) // Important en prod !
                 ->withSameSite('Lax')

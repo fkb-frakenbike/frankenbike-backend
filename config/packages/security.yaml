@@ -18,23 +18,6 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: app_user_provider
-            entry_point: form_login
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                username_parameter: email
-                password_parameter: password
-                enable_csrf: true
-
-            logout: true
-
-            remember_me:
-                secret: '%kernel.secret%'
-                signature_properties: [password]
-                #always_remember_me: true
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#firewalls-authentication
@@ -51,8 +34,26 @@ security:
             # Lexik JWT authenticator
             jwt: ~
 
+            logout: true
             # acts as entry point when no token is present
             entry_point: jwt
+        main:
+            lazy: true
+            provider: app_user_provider
+            entry_point: form_login
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: email
+                password_parameter: password
+                enable_csrf: true
+
+            logout: true
+
+            remember_me:
+                secret: '%kernel.secret%'
+                signature_properties: [ password ]
+                #always_remember_me: true
     # Easy way to control access for large sections of your site
     # ─────────────────────────────────────────────
     # Access rules
@@ -60,6 +61,7 @@ security:
     access_control:
         # Allow unauthenticated calls ONLY to these two API endpoints
         - { path: ^/api/login$,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/users,  roles: PUBLIC_ACCESS, method: POST }
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
 
         # Every other /api/* call needs a valid JWT
@@ -67,4 +69,4 @@ security:
 
         # HTML side
         - { path: ^/admin,       roles: ROLE_ADMIN }
-        - { path: ^/,            roles: PUBLIC_ACCESS }   # homepage, login form, etc.
+        #- { path: ^/,            roles: PUBLIC_ACCESS }   # homepage, login form, etc.
