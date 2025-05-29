@@ -1,8 +1,14 @@
 lexik_jwt_authentication:
-    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
-    public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
-    pass_phrase: '%env(JWT_PASSPHRASE)%'
+        secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+        public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
+        pass_phrase: '%env(JWT_PASSPHRASE)%'
 
-    api_platform:
-        check_path: /api/login_check
-    
+        api_platform:
+            check_path: /api/login_check
+
+        token_extractors:
+            authorization_header: { enabled: false }
+            query_parameter: { enabled: false }
+            cookie:
+                enabled: true
+                name: AUTH_TOKEN_COOKIE
