@@ -1,7 +1,5 @@
 ###> symfony/framework-bundle ###
-/.env.local
-/.env.local.php
-/.env.*.local
+
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /var/
@@ -9,10 +7,10 @@
 ###< symfony/framework-bundle ###
 
 # Ignore .env files (DO NOT commit sensitive credentials)
-.env
+
 # Ignore MySQL database files (Docker volumes)
 mysql_data/
-sql/
+
 *.sql
 # Ignore log files
 logs/
