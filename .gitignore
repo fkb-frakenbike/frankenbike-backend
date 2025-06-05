@@ -25,6 +25,7 @@ docker-compose.debug.yml
 .Dockerfile.swp
 *.pid
 *.sock
+composer.lock
 # Ignore node_modules for the frontend
 front/node_modules/
 front/.next/
