@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
+use App\Entity\Profile;
 
 class UserController extends AbstractController
 {
@@ -31,8 +32,13 @@ class UserController extends AbstractController
             $user->setRole($data['role']);
         }
 
+        $profile = new Profile();
+        $profile->setFirstName($data['firstname'] ?? '');
+        $profile->setUser($user);
+
         // Save the new user to the database
         $em->persist($user);
+        $em->persist($profile);
         $em->flush();
 
         // Serialize the User object to JSON and return response
