@@ -20,7 +20,10 @@ class UserController extends AbstractController
     {
         // Parse JSON request data
         $data = json_decode($request->getContent(), true);
-        // TODO: Add error handling if JSON is invalid or fields missing
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        if ($existingUser) {
+        return new JsonResponse(['error' => 'Email already exists'], JsonResponse::HTTP_BAD_REQUEST);
+}
 
         // Create new User entity and set its properties
         $user = new User();
