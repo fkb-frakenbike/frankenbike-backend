@@ -10,16 +10,20 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
+use App\Entity\Profile;
 
-final class UserController extends AbstractController
+class UserController extends AbstractController
 {
-    #[Route('/users', name: 'create_user', methods: ['POST'])]
+    #[Route('/api/users', name: 'create_user', methods: ['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher
     ): JsonResponse 
     {
         // Parse JSON request data
         $data = json_decode($request->getContent(), true);
-        // TODO: Add error handling if JSON is invalid or fields missing
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        if ($existingUser) {
+        return new JsonResponse(['error' => 'Email already exists'], JsonResponse::HTTP_BAD_REQUEST);
+}
 
         // Create new User entity and set its properties
         $user = new User();
@@ -27,8 +31,17 @@ final class UserController extends AbstractController
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
+        if (isset($data['role'])) {
+            $user->setRole($data['role']);
+        }
+
+        $profile = new Profile();
+        $profile->setFirstName($data['firstname'] ?? '');
+        $profile->setUser($user);
+
         // Save the new user to the database
         $em->persist($user);
+        $em->persist($profile);
         $em->flush();
 
         // Serialize the User object to JSON and return response
@@ -36,7 +49,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_CREATED, [], true);
     }
 
-    #[Route('/users', name: 'list_users', methods: ['GET'])]
+    #[Route('/api/users', name: 'list_users', methods: ['GET'])]
     public function getAllUsers(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $users = $em->getRepository(User::class)->findAll();
@@ -44,7 +57,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/users/{id}', name: 'get_user', methods: ['GET'])]
+    #[Route('/api/users/{id}', name: 'get_user', methods: ['GET'])]
     public function getUserById(int $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
@@ -55,7 +68,7 @@ final class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/users/{id}', name: 'delete_user', methods: ['DELETE'])]
+    #[Route('/api/users/{id}', name: 'delete_user', methods: ['DELETE'])]
     public function deleteUser(int $id, EntityManagerInterface $em): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);

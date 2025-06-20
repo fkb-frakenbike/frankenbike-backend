@@ -31,7 +31,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Map to the "role" column in your DB
     #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
-    private ?string $role = 'user';
+    private ?string $role = null;
 
     // Add the created_at column from the database
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
@@ -193,7 +193,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
-    // Symfony Security stuff:
+    /** *
+     * required by Symfony’s UserInterface
+     */
     public function getRoles(): array
     {
         // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
