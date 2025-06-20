@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ProfileRepository;
+use DateTimeInterface;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
@@ -18,31 +20,31 @@ class Profile
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false)]
     private ?User $user = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $nickname = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(name: "first_name", length: 255, nullable: true)]
     private ?string $firstName = null;
 
-    #[ORM\Column(name: "last_name", length: 255)]
+    #[ORM\Column(name: "last_name", length: 255, nullable: true)]
     private ?string $lastName = null;
 
-    #[ORM\Column(type: "date")]
-    private ?string $birthdate = null;
+    #[ORM\Column(type: "date", nullable: true)]
+    private ?DateTimeInterface $birthdate = null;
 
-    #[ORM\Column(name: "photo_url", length: 255)]
+    #[ORM\Column(name: "photo_url", length: 255, nullable: true)]
     private ?string $photoUrl = null;
 
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $createdAt;
+    private DateTime $createdAt;
 
     #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $updatedAt;
+    private DateTime $updatedAt;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
+        $this->createdAt = new DateTime();
+        $this->updatedAt = new DateTime();
     }
 
     public function getId(): ?int
@@ -97,12 +99,12 @@ class Profile
         return $this;
     }
 
-    public function getBirthdate(): ?\DateTime
+    public function getBirthdate(): ?DateTime
     {
         return $this->birthdate;
     }
 
-    public function setBirthdate(string $birthdate): static
+    public function setBirthdate(?DateTimeInterface $birthdate): static
     {
         $this->birthdate = $birthdate;
 
@@ -121,17 +123,17 @@ class Profile
         return $this;
     }
 
-    public function getCreatedAt(): \DateTime
+    public function getCreatedAt(): DateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): \DateTime
+    public function getUpdatedAt(): DateTime
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTime $updatedAt): static
+    public function setUpdatedAt(DateTime $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 

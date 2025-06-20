@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
+use App\Entity\Profile;
 
 class UserController extends AbstractController
 {
@@ -19,7 +20,10 @@ class UserController extends AbstractController
     {
         // Parse JSON request data
         $data = json_decode($request->getContent(), true);
-        // TODO: Add error handling if JSON is invalid or fields missing
+        $existingUser = $em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
+        if ($existingUser) {
+        return new JsonResponse(['error' => 'Email already exists'], JsonResponse::HTTP_BAD_REQUEST);
+}
 
         // Create new User entity and set its properties
         $user = new User();
@@ -31,8 +35,13 @@ class UserController extends AbstractController
             $user->setRole($data['role']);
         }
 
+        $profile = new Profile();
+        $profile->setFirstName($data['firstname'] ?? '');
+        $profile->setUser($user);
+
         // Save the new user to the database
         $em->persist($user);
+        $em->persist($profile);
         $em->flush();
 
         // Serialize the User object to JSON and return response
