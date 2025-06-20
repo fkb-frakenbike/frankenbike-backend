@@ -27,9 +27,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
+    private ?string $plainPassword = null;
+
     // Map to the "role" column in your DB
     #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
-    private ?string $role = 'user';
+    private ?string $role = null;
 
     // Add the created_at column from the database
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
@@ -93,6 +95,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -179,11 +193,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string) $this->email;
     }
 
-    // Symfony Security stuff:
+    /** *
+     * required by Symfony’s UserInterface
+     */
     public function getRoles(): array
     {
         // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
         return ['ROLE_' . strtoupper($this->getRole())];
     }
-    public function eraseCredentials(): void {}
+    public function eraseCredentials(): void 
+    {
+        $this->plainPassword = null; //a safe thing to do
+    }
 }
