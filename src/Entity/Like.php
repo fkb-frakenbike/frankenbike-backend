@@ -7,7 +7,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LikeRepository::class)]
-#[ORM\Table(name: "likes")]
+#[ORM\Table(name: 'likes')]
 class Like
 {
     #[ORM\Id]
@@ -33,6 +33,7 @@ class Like
     {
         return $this->user;
     }
+
     public function setUser(?User $user): static
     {
         $this->user = $user;
@@ -44,6 +45,7 @@ class Like
     {
         return $this->project;
     }
+
     public function setProject(?Project $project): static
     {
         $this->project = $project;
@@ -55,6 +57,7 @@ class Like
     {
         return $this->created_at;
     }
+
     public function setCreated_at(\DateTime $created_at): static
     {
         $this->created_at = $created_at;

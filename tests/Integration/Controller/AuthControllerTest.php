@@ -1,4 +1,5 @@
 <?php
+
 // tests/ConnectionTest.php
 
 namespace App\Tests;
@@ -44,17 +45,14 @@ class AuthControllerTest extends WebTestCase
             $conn->executeStatement('DELETE FROM users;');
         }
     }
+
     public function testDatabaseNameIsCorrect(): void
     {
-
-
         // 2) Get Doctrine’s connection from the service container
         $connection = $this->entityManager->getConnection();
 
-
         // 3) Fetch the “current database name” directly via SQL
         $currentDb = $connection->executeQuery('SELECT DATABASE()')->fetchOne();
-
 
         // 4) Assert that it is "fkb_db_test"
         $this->assertEquals(
@@ -63,9 +61,9 @@ class AuthControllerTest extends WebTestCase
             sprintf('Expected Doctrine to connect to fkb_db_test, but got "%s".', $currentDb)
         );
     }
+
     public function testGetReturnsNotLoggedIn(): void
     {
-
         // Make a GET request to /api/me without any authentication
         $this->client->request('GET', '/api/me');
 
@@ -79,13 +77,13 @@ class AuthControllerTest extends WebTestCase
         $this->createUser('j@example.com', 'correct-password');
 
         $this->client->request('POST', '/api/login',
-        [],
-        [],
-        ['CONTENT_TYPE' => 'application/json'],
-        json_encode([
-            'email' => 'j@example.com',
-            'password' => 'correct-passwor',
-        ]));
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'email' => 'j@example.com',
+                'password' => 'correct-passwor',
+            ]));
 
         $response = $this->client->getResponse();
 

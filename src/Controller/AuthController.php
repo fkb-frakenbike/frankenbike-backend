@@ -4,26 +4,24 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
 class AuthController extends AbstractController
 {
-
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $passwordHasher,
-        JWTTokenManagerInterface $jwtManager
-    ): JsonResponse
-    {
+        JWTTokenManagerInterface $jwtManager,
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
         $email = $data['email'] ?? '';
         $password = $data['password'] ?? '';
@@ -39,12 +37,13 @@ class AuthController extends AbstractController
             return new JsonResponse(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
         }
 
-        if($rememberMe) {
+        if ($rememberMe) {
             $now = new \DateTimeImmutable();
             $later = $now->modify('+30 days');
             $payload = [
                 'exp' => $later->getTimestamp(),
             ];
+            /** @phpstan-ignore-next-line */
             $jwt = $jwtManager->create($user, $payload);
         } else {
             $jwt = $jwtManager->create($user);
@@ -52,25 +51,24 @@ class AuthController extends AbstractController
 
         $response = new JsonResponse(['message' => 'Connected'], Response::HTTP_OK);
 
-
-        if($rememberMe) {
-            $expiresAt = time()+(60*60*24*30);
+        if ($rememberMe) {
+            $expiresAt = time() + (60 * 60 * 24 * 30);
             $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
                 ->withHttpOnly(true)
                 ->withSecure(true)
-                ->withSameSite("Lax")
+                ->withSameSite('lax')
                 ->withPath('/')
                 ->withExpires($expiresAt);
         } else {
             $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
                 ->withHttpOnly(true)
                 ->withSecure(true)
-                ->withSameSite("Lax")
+                ->withSameSite('lax')
                 ->withPath('/');
         }
 
-
         $response->headers->setCookie($cookie);
+
         return $response;
     }
 
@@ -80,7 +78,7 @@ class AuthController extends AbstractController
         $expired = Cookie::create('AUTH_TOKEN_COOKIE', '')
             ->withHttpOnly(true)
             ->withSecure(true)  // keep settings consistent
-            ->withSameSite('Lax')
+            ->withSameSite('lax')
             ->withPath('/')
             ->withExpires(1)    // 1 second after 1970 => removed by browser
         ;

@@ -19,7 +19,7 @@ final class Version20250606153346 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-    $this->addSql(<<<'SQL'
+        $this->addSql(<<<'SQL'
         ALTER TABLE profiles
             CHANGE nickname nickname VARCHAR(255) DEFAULT NULL,
             CHANGE first_name first_name VARCHAR(255) DEFAULT NULL,
@@ -29,9 +29,9 @@ final class Version20250606153346 extends AbstractMigration
     SQL);
     }
 
-public function down(Schema $schema): void
+    public function down(Schema $schema): void
     {
-    $this->addSql(<<<'SQL'
+        $this->addSql(<<<'SQL'
         ALTER TABLE profiles
             CHANGE nickname nickname VARCHAR(100) NOT NULL,
             CHANGE first_name first_name VARCHAR(255) NOT NULL,

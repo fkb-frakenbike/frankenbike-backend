@@ -6,14 +6,12 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use App\Enum\UserRole;
-
 // 1. Import these interfaces from Symfony Security
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: "users")]
+#[ORM\Table(name: 'users')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -30,11 +28,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plainPassword = null;
 
     // Map to the "role" column in your DB
-    #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
+    #[ORM\Column(type: 'string', length: 5, options: ['default' => 'user'])]
     private ?string $role = null;
 
     // Add the created_at column from the database
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    #[ORM\Column(name: 'created_at', type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTime $createdAt;
 
     /**
@@ -115,10 +113,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->role ?? 'user';
     }
-    
+
     public function setRole(string $role): static
     {
         $this->role = $role;
+
         return $this;
     }
 
@@ -194,15 +193,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /** *
-     * required by Symfony’s UserInterface
+     * required by Symfony’s UserInterface.
      */
     public function getRoles(): array
     {
         // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
-        return ['ROLE_' . strtoupper($this->getRole())];
+        return ['ROLE_'.strtoupper($this->getRole())];
     }
-    public function eraseCredentials(): void 
+
+    public function eraseCredentials(): void
     {
-        $this->plainPassword = null; //a safe thing to do
+        $this->plainPassword = null; // a safe thing to do
     }
 }

@@ -7,9 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
-#[ORM\Table(name: "projects")]
+#[ORM\Table(name: 'projects')]
 class Project
 {
     #[ORM\Id]
@@ -18,39 +17,39 @@ class Project
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
-    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?User $user = null;
 
     #[ORM\Column(length: 100)]
     private ?string $title = null;
 
-    #[ORM\Column(type: "text", nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
     // Add the created_at column from the database
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    #[ORM\Column(name: 'created_at', type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTime $createdAt;
 
-    #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    #[ORM\Column(name: 'updated_at', type: 'datetime', options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTime $updatedAt;
 
     /**
-     * A project can have multiple comments
+     * A project can have multiple comments.
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"])]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'project', cascade: ['remove'])]
     private Collection $comments;
 
     /**
-     * A project can have multiple likes (some might be user-likes referencing this project)
+     * A project can have multiple likes (some might be user-likes referencing this project).
      */
-    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"])]
+    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'project', cascade: ['remove'])]
     private Collection $likes;
 
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
-        //$this->comments = new ArrayCollection();
+        // $this->comments = new ArrayCollection();
         $this->likes = new ArrayCollection();
     }
 
@@ -148,6 +147,4 @@ class Project
 
         return $this;
     }
-
-
 }

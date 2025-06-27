@@ -3,11 +3,10 @@
 namespace App\Entity;
 
 use App\Repository\CommentRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
-#[ORM\Table(name: "comments")]
+#[ORM\Table(name: 'comments')]
 class Comment
 {
     #[ORM\Id]
@@ -16,11 +15,11 @@ class Comment
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(name: "user_id", nullable: false)]
+    #[ORM\JoinColumn(name: 'user_id', nullable: false)]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(name: "project_id", nullable: false)]
+    #[ORM\JoinColumn(name: 'project_id', nullable: false)]
     private ?Project $project = null;
 
     #[ORM\Column(type: 'text')]
@@ -42,6 +41,7 @@ class Comment
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
         return $this;
     }
 
@@ -53,6 +53,7 @@ class Comment
     public function setProject(?Project $project): static
     {
         $this->project = $project;
+
         return $this;
     }
 
@@ -64,6 +65,7 @@ class Comment
     public function setText(?string $text): static
     {
         $this->text = $text;
+
         return $this;
     }
 
@@ -75,6 +77,7 @@ class Comment
     public function setCreatedAt(?\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 }

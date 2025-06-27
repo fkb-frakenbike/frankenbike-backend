@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, dom, filter, gd, json, pgsql
+        coverage: xdebug
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Create test environment file
+      run: |
+        cp .env .env.test.local
+        echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/test_db?serverVersion=15&charset=utf8" >> .env.test.local
+
+    - name: Run database migrations
+      run: |
+        php bin/console doctrine:database:create --env=test --if-not-exists
+        php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+    - name: Load fixtures (if any)
+      run: php bin/console doctrine:fixtures:load --env=test --no-interaction
+      continue-on-error: true
+
+    - name: Run PHPUnit tests
+      run: php bin/phpunit --coverage-text
+
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse src tests --level=6
+
+    - name: Run PHP CS Fixer
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff

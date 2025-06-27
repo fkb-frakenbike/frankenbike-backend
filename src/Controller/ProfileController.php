@@ -2,37 +2,39 @@
 
 namespace App\Controller;
 
+use App\Entity\Profile;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
-use App\Entity\Profile;
-use App\Entity\User;
 
 class ProfileController extends AbstractController
 {
     #[Route('/api/profiles', name: 'list_profiles', methods: ['GET'])]
-    public function getAllProfiles(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    public function getAllProfiles(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {
         $profiles = $em->getRepository(Profile::class)->findAll();
         $jsonProfiles = $serializer->serialize($profiles, 'json');
+
         return new JsonResponse($jsonProfiles, JsonResponse::HTTP_OK, [], true);
     }
 
     #[Route('/api/profiles/user/{userId}', name: 'get_profile_by_user', methods: ['GET'])]
-    public function getProfileByUserId(int $userId, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    public function getProfileByUserId(int $userId, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {
         $profile = $em->getRepository(Profile::class)->findOneBy(['user' => $userId]);
         if (!$profile) {
             return new JsonResponse(['error' => 'Profile not found'], JsonResponse::HTTP_NOT_FOUND);
         }
         $jsonProfile = $serializer->serialize($profile, 'json');
+
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 
     #[Route('/api/profiles/user/{userId}', name: 'update_profile_by_user', methods: ['PUT'])]
-    public function updateProfileByUserId(int $userId, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    public function updateProfileByUserId(int $userId, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (!$data) {
@@ -63,6 +65,7 @@ class ProfileController extends AbstractController
         $em->flush();
 
         $jsonProfile = $serializer->serialize($profile, 'json');
+
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 }
