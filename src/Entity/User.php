@@ -31,7 +31,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Map to the "role" column in your DB
     #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
-    private ?string $role = null;
+    private ?string $role;
 
     // Add the created_at column from the database
     #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
