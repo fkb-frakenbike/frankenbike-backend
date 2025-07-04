@@ -34,6 +34,9 @@ class Project
     #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
     private \DateTime $updatedAt;
 
+    #[ORM\Column(length: 255)]
+    private string $imageUrl;
+
     /**
      * A project can have multiple comments
      */
@@ -50,7 +53,8 @@ class Project
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
-        //$this->comments = new ArrayCollection();
+        $this->comments = new ArrayCollection();
+        $this->components = new ArrayCollection();
         $this->likes = new ArrayCollection();
     }
 
@@ -99,13 +103,7 @@ class Project
     {
         return $this->createdAt;
     }
-
-    public function setCreatedAt(\DateTime $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
+    
 
     public function getUpdatedAt(): ?\DateTime
     {
@@ -147,6 +145,31 @@ class Project
         }
 
         return $this;
+    }
+
+    public function getImageUrl(): string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(string $imageUrl): void
+    {
+        $this->imageUrl = $imageUrl;
+    }
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function setComments(Collection $comments): void
+    {
+        $this->comments = $comments;
+    }
+
+    public function addComment(Comment $comment): void
+    {
+        $this->comments->add($comment);
+
     }
 
 
