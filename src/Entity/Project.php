@@ -6,6 +6,7 @@ use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Config\Definition\Exception\Exception;
 
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
@@ -19,7 +20,7 @@ class Project
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
-    private ?User $user = null;
+    private ?User $user;
 
     #[ORM\Column(length: 100)]
     private ?string $title = null;
@@ -42,6 +43,8 @@ class Project
      */
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"])]
     private Collection $comments;
+
+    private Collec
 
     /**
      * A project can have multiple likes (some might be user-likes referencing this project)
@@ -169,8 +172,14 @@ class Project
     public function addComment(Comment $comment): void
     {
         $this->comments->add($comment);
-
     }
 
-
+    public function removeComment(Comment $comment): void
+    {
+        if (!$this->comments->contains($comment)) {
+            throw new Exception("No comment to delete");
+        } else {
+            $this->comments->removeElement($comment);
+        }
+    }
 }
