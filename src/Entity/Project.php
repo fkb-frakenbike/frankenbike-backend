@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -20,9 +21,9 @@ class Project
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
-    private ?User $user;
+    private ?User $user=null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 255)]
     private ?string $title = null;
 
     #[ORM\Column(type: "text", nullable: true)]
@@ -41,15 +42,18 @@ class Project
     /**
      * A project can have multiple comments
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"])]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $comments;
 
-    private Collec
+    #[ORM\OneToMany(targetEntity: Component::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
+    private Collection $components;
+
+
 
     /**
      * A project can have multiple likes (some might be user-likes referencing this project)
      */
-    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"])]
+    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $likes;
 
     public function __construct()
@@ -106,7 +110,6 @@ class Project
     {
         return $this->createdAt;
     }
-    
 
     public function getUpdatedAt(): ?\DateTime
     {
@@ -155,31 +158,57 @@ class Project
         return $this->imageUrl;
     }
 
-    public function setImageUrl(string $imageUrl): void
+    public function setImageUrl(string $imageUrl): static
     {
         $this->imageUrl = $imageUrl;
+        return $this;
     }
+
     public function getComments(): Collection
     {
         return $this->comments;
     }
 
-    public function setComments(Collection $comments): void
-    {
-        $this->comments = $comments;
-    }
-
-    public function addComment(Comment $comment): void
-    {
-        $this->comments->add($comment);
-    }
-
-    public function removeComment(Comment $comment): void
+    public function addComment(Comment $comment): static
     {
         if (!$this->comments->contains($comment)) {
-            throw new Exception("No comment to delete");
-        } else {
-            $this->comments->removeElement($comment);
+            $this->comments->add($comment);
+            $comment->setProject($this); // set the owning side!
         }
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): static
+    {
+        if ($this->comments->removeElement($comment)) {
+            if($comment->getProject()===$this){
+                $comment->setProject(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getComponents(): Collection
+    {
+        return $this->components;
+    }
+
+    public function addComponent(Component $component): static
+    {
+        if(!$this->components->contains($component)) {
+            $this->components->add($component);
+            $component->setProject($this);
+        }
+        return $this;
+    }
+
+    public function removeComponent(Component $component): static
+    {
+        if ($this->components->removeElement($component)) {
+            if ($component->getProject() === $this) {
+                $component->setProject(null);
+            }
+        }
+        return $this;
     }
 }
