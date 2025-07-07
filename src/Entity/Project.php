@@ -23,21 +23,21 @@ class Project
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?User $user=null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255,  nullable: false)]
     private ?string $title = null;
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
     // Add the created_at column from the database
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $createdAt;
+    #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $updatedAt;
+    #[ORM\Column(name: "updated_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTimeImmutable $updatedAt;
 
-    #[ORM\Column(length: 255)]
-    private string $imageUrl;
+    #[ORM\Column(name: "image_url",length: 255,  nullable: false)]
+    private string $imageUrl= "";
 
     /**
      * A project can have multiple comments
@@ -58,8 +58,8 @@ class Project
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
         $this->comments = new ArrayCollection();
         $this->components = new ArrayCollection();
         $this->likes = new ArrayCollection();
@@ -106,17 +106,17 @@ class Project
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTime
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTime
+    public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTime $updatedAt): static
+    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 

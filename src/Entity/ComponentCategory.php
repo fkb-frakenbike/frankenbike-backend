@@ -8,5 +8,9 @@ use App\Repository\ComponentCategoryRepository;
 #[ORM\Entity(repositoryClass: ComponentCategoryRepository::class)]
 class ComponentCategory
 {
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
 }

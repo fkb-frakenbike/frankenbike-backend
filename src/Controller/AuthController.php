@@ -50,7 +50,7 @@ class AuthController extends AbstractController
             $jwt = $jwtManager->create($user);
         }
 
-        $response = new JsonResponse(['message' => 'Connected', 'token'=> (string)$jwt], Response::HTTP_OK);
+        $response = new JsonResponse(['message' => 'Connected'], Response::HTTP_OK);
 
 
         if($rememberMe) {

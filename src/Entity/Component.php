@@ -5,7 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\ORM\Table(name:"components")]
+#[ORM\Table(name:"components")]
 class Component
 {
     #[ORM\Id]
