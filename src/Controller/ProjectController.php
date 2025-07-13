@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +31,7 @@ class ProjectController extends AbstractController
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'
-                ], JsonResponse::HTTP_UNAUTHORIZED);
+                ], Response::HTTP_UNAUTHORIZED);
             }
             $data = json_decode($request->getContent(), true);
             $this->logger->info(json_encode($data,JSON_PRETTY_PRINT));
@@ -47,14 +48,8 @@ class ProjectController extends AbstractController
             $this->em->persist($project);
             $this->em->flush();
 
-            return new JsonResponse(['data'=>$data,
-                'user'=>$user ?[
-                    'id'=>$user->getId(),
-                    'email'=>$user->getEmail()
-                ] : null ,
-                'status'=>'success',
-                'message'=>'create project success'
-            ]);
+            $projectJson = $this->serializer->serialize($project, 'json',['groups' => 'project:read']);
+            return new JsonResponse($projectJson, Response::HTTP_OK,[],true);
 
         } catch (\Throwable $exception){
             // Log the error and return a clear message
@@ -62,7 +57,7 @@ class ProjectController extends AbstractController
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Something went wrong. '.$exception->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -74,25 +69,25 @@ class ProjectController extends AbstractController
         //to avoid looping infintely because of going over thserializer that
         // always reaches the next child relationship and then the child will be
         // the parent and vice versa
-        $projectData = [];
-        foreach ($projects as $project) {
-            $projectData[] = [
-                'id' => $project->getId(),
-                'title' => $project->getTitle(),
-                'description' => $project->getDescription(),
-                'imageUrl' => $project->getImageUrl(),
-                'user' => [
-                    'id' => $project->getUser()?->getId(),
-                    'email' => $project->getUser()?->getEmail(),
-                ],
-                'createdAt' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
-                // etc.
-            ];
-        }
+//        $projectData = [];
+//        foreach ($projects as $project) {
+//            $projectData[] = [
+//                'id' => $project->getId(),
+//                'title' => $project->getTitle(),
+//                'description' => $project->getDescription(),
+//                'imageUrl' => $project->getImageUrl(),
+//                'user' => [
+//                    'id' => $project->getUser()?->getId(),
+//                    'email' => $project->getUser()?->getEmail(),
+//                ],
+//                'createdAt' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
+//                // etc.
+//            ];
+//        }
 
-        //$jsonProjects = $this->serializer->serialize($projects, 'json');
+        $jsonProjects = $this->serializer->serialize($projects, 'json',['groups'=>['project:read']]);
 
-        return new JsonResponse($projectData,JsonResponse::HTTP_OK);
+        return new JsonResponse($jsonProjects,JsonResponse::HTTP_OK,[],true);
     }
     #[Route('/api/projects/{id}', name: 'get_project', methods: ['GET'])]
     public function getProject(int $id): JsonResponse
@@ -102,21 +97,23 @@ class ProjectController extends AbstractController
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Project not found'
-            ], JsonResponse::HTTP_NOT_FOUND);
+            ], Response::HTTP_NOT_FOUND);
         }
-        $projectData = [
-            'id' => $project->getId(),
-            'title' => $project->getTitle(),
-            'description' => $project->getDescription(),
-            'imageUrl' => $project->getImageUrl(),
-            'user' => [
-                'id' => $project->getUser()?->getId(),
-                'email' => $project->getUser()?->getEmail(),
-            ],
-            'createdAt' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
-            // etc.
-        ];
-        return new JsonResponse($projectData,JsonResponse::HTTP_OK);
+//        $projectData = [
+//            'id' => $project->getId(),
+//            'title' => $project->getTitle(),
+//            'description' => $project->getDescription(),
+//            'imageUrl' => $project->getImageUrl(),
+//            'user' => [
+//                'id' => $project->getUser()?->getId(),
+//                'email' => $project->getUser()?->getEmail(),
+//            ],
+//            'createdAt' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
+//            // etc.
+//        ];
+        $jsonProject = $this->serializer->serialize($project, 'json',['groups'=>['project:read']]);
+
+        return new JsonResponse($jsonProject, Response::HTTP_OK,[],true);
     }
 
     #[Route('/api/projects/{id}', name: 'update_project', methods: ['PUT', 'PATCH'])]
@@ -165,27 +162,17 @@ class ProjectController extends AbstractController
                     }
                 }
             }
-            $project->setUpdatedAt(new \DateTimeImmutable());
+            $project->setUpdatedAt(new \DateTime());
 
             $this->em->flush();
-
+            $jsonProject = $this->serializer->serialize($project, 'json',['groups'=>['project:read']]);
             // Return updated project in response
-            return new JsonResponse([
-                'status' => 'success',
-                'message' => 'Project updated',
-                'project' => [
-                    'id' => $project->getId(),
-                    'title' => $project->getTitle(),
-                    'description' => $project->getDescription(),
-                    'imageUrl' => $project->getImageUrl(),
-                    'updatedAt' => $project->getUpdatedAt()->format('Y-m-d H:i:s')
-                ]
-            ]);
+            return new JsonResponse($jsonProject, Response::HTTP_OK,[],true);
         } catch (\Throwable $e) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Error: ' . $e->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

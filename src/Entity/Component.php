@@ -5,33 +5,41 @@ namespace App\Entity;
 use App\Enum\ComponentCategory;
 use App\Enum\ComponentOrigin;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity]
 #[ORM\Table(name:"components")]
 class Component
 {
+    #[Groups(['component:read'])]
     #[ORM\Id]
     #[ORM\Column(type:"integer")]
     #[ORM\GeneratedValue]
     private ?int $id = null;
 
+    #[Groups(['component:read'])]
     #[ORM\Column(type:"string", length: 255)]
     private ?string $name;
 
+    #[Groups(['component:read'])]
     #[ORM\Column(type:'text', nullable:true)]
     private ?string $description = null;
 
+    #[Groups(['component:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentOrigin::class)]
     private ComponentOrigin $origin; //enum
 
+    #[Groups(['component:read'])]
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: "components")]
     #[ORM\JoinColumn(name: "project_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Project $project = null;
 
+    #[Groups(['component:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentCategory::class)]
     private ComponentCategory $category;
 
-    #[ORM\Column(type: "datetime")]
+    #[Groups(['component:read'])]
+    #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable  $createdAt;
 
     public function __construct()

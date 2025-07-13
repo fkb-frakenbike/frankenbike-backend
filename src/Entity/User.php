@@ -6,21 +6,23 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use App\Enum\UserRole;
 
 // 1. Import these interfaces from Symfony Security
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: "users")]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    #[Groups(['user:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
+    #[Groups(['user:read', 'profile:read', 'project:read'])]
     #[ORM\Column(length: 255, unique: true)]
     private ?string $email = null;
 
@@ -30,16 +32,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plainPassword = null;
 
     // Map to the "role" column in your DB
+    #[Groups(['user:read', 'profile:read'])]
     #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
     private ?string $role;
 
     // Add the created_at column from the database
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $createdAt;
+    #[Groups(['user:read'])]
+    #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTimeImmutable $createdAt;
 
-    /**
-     * @var Collection<int, Project>
-     */
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user')]
     private Collection $projects;
 
@@ -49,11 +50,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
     private Collection $likes;
 
-    /**
-     * @var Collection<int, Profile>
-     */
-    #[ORM\OneToMany(targetEntity: Profile::class, mappedBy: 'user')]
-    private Collection $profiles;
+    #[ORM\OneToOne(targetEntity: Profile::class, mappedBy: 'user')]
+    private ?Profile $profile = null;
 
     /**
      * @var Collection<int, Comment>
@@ -63,10 +61,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
         $this->projects = new ArrayCollection();
         $this->likes = new ArrayCollection();
-        $this->profiles = new ArrayCollection();
         $this->comments = new ArrayCollection();
     }
 
@@ -122,7 +119,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getCreatedAt(): \DateTime
+    public function setProfile(?Profile $profile): self {
+        $this->profile = $profile;
+        if ($profile && $profile->getUser() !== $this) {
+            $profile->setUser($this);
+        }
+        return $this;
+    }
+    public function getProfile(): ?Profile {
+        return $this->profile;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }

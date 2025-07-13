@@ -8,43 +8,52 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: "projects")]
 class Project
 {
+    #[Groups(['project:read', 'user:read', 'like:read','comment:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'projects')]
-    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
+    #[Groups(['project:read'])]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'projects')]
     private ?User $user=null;
 
+    #[Groups(['project:read'])]
     #[ORM\Column(length: 255,  nullable: false)]
     private ?string $title = null;
 
+    #[Groups(['project:read'])]
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
     // Add the created_at column from the database
+    #[Groups(['project:read'])]
     #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\Column(name: "updated_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTimeImmutable $updatedAt;
+    #[Groups(['project:read'])]
+    #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTime $updatedAt;
 
+    #[Groups(['project:read'])]
     #[ORM\Column(name: "image_url",length: 255,  nullable: false)]
     private string $imageUrl= "";
 
     /**
      * A project can have multiple comments
      */
+    #[Groups(['project:read'])]
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $comments;
 
+    #[Groups(['project:read'])]
     #[ORM\OneToMany(targetEntity: Component::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $components;
 
@@ -59,7 +68,7 @@ class Project
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTime();
         $this->comments = new ArrayCollection();
         $this->components = new ArrayCollection();
         $this->likes = new ArrayCollection();
@@ -111,12 +120,12 @@ class Project
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?\DateTime
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
+    public function setUpdatedAt(\DateTime $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 

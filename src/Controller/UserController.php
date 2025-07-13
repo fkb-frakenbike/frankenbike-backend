@@ -38,22 +38,23 @@ class UserController extends AbstractController
         $profile = new Profile();
         $profile->setFirstName($data['firstname'] ?? '');
         $profile->setUser($user);
+        $user->setProfile($profile);
 
         // Save the new user to the database
         $em->persist($user);
         $em->persist($profile);
         $em->flush();
 
-        // Serialize the User object to JSON and return response
-        $jsonUser = $serializer->serialize($user, 'json');
-        return new JsonResponse($jsonUser, JsonResponse::HTTP_CREATED, [], true);
+
+        $jsonUser = $serializer->serialize($user, 'json', ['groups' => ['user:read']]);
+        return new JsonResponse($jsonUser, JsonResponse::HTTP_CREATED,[],true);
     }
 
     #[Route('/api/users', name: 'list_users', methods: ['GET'])]
     public function getAllUsers(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $users = $em->getRepository(User::class)->findAll();
-        $jsonUsers = $serializer->serialize($users, 'json');
+        $jsonUsers = $serializer->serialize($users, 'json',['groups'=>['user:read']]);
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
     }
 
@@ -64,7 +65,7 @@ class UserController extends AbstractController
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
         }
-        $jsonUser = $serializer->serialize($user, 'json');
+        $jsonUser = $serializer->serialize($user, 'json',['groups'=>['user:read']]);
         return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, [], true);
     }
 
