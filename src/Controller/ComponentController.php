@@ -100,7 +100,8 @@ class ComponentController extends AbstractController
     }
 
     #[Route('/api/projects/{projectId}/components', methods: ['GET'])]
-    public function getByProjectId(int $projectId) {
+    public function getByProjectId(int $projectId)
+    {
         // 1. fetch project, check ownership
         $project = $this->em->getRepository(Project::class)->find($projectId);
         $user = $this->getUser();
@@ -134,18 +135,124 @@ class ComponentController extends AbstractController
     }
 
     #[Route('/api/components/{id}', methods: ['GET'])]
-    public function getComponent(int $id) {
-        // fetch, check ownership, return
+    public function getComponent(int $id)
+    {
+        try {
+            // fetch, check ownership, return
+            $user= $this->getUser();
+            if(!$user) {
+                $this->logger->info("User not logged in");
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'User not authenticated'
+                ], JsonResponse::HTTP_UNAUTHORIZED);
+            }
+            $component = $this->em->getRepository(Component::class)->find($id);
+            if(!$component){
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Component not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+            if($component->getUser()->getId()!== $user->getId()) {
+                return new JsonResponse(['status' => 'error',
+                    'message' => 'Authentication required'
+                ], Response::HTTP_NOT_FOUND);
+            }
+            return new JsonResponse(
+                $component,
+                Response::HTTP_OK,
+                [],
+                true
+            );
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error in createComponent: '.$exception->getMessage());
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Something went wrong. '.$exception->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     #[Route('/api/components/{id}', methods: ['PUT', 'PATCH'])]
-    public function updateComponent(Request $req, int $id) {
+    public function updateComponent(Request $req, int $id)
+    {
+        $user = $this->getUser();
+        if(!$user){
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'User not logged in'
+            ], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+
         // fetch, check ownership
+        $component = $this->em->getRepository(Component::class)->find($id);
+        if(!$component){
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Component not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
         // decode, update allowed fields, flush, return
+        if($component->getUser()->getId()!== $user->getId()) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Authentication required'
+            ], JsonResponse::HTTP_UNAUTHORIZED);
+        }
+        $data = json_decode($req->getContent(), true);
+
+        //Update allowed fields
+        if(isset($data['name'])) $component->setName($data['name']);
+        if(isset($data['description'])) $component->setDescription($data['description']);
+        if(isset($data['category'])) $component->setCategory($data['category']);
+        if(isset($data['origin'])) $component->setOrigin($data['origin']);
+
+        $component->setUpdatedAt(new \DateTime('now'));
+
+//        no need to persist this data since it is already created this component
+        //$this->em->persist($component);
+        $this->em->flush();
+
+        $jsonComponent = $this->serializer->serialize($component, 'json',['groups' => ['component:read']]);
+        return new JsonResponse($jsonComponent, Response::HTTP_OK,[],true);
+
     }
 
     #[Route('/api/components/{id}', methods: ['DELETE'])]
-    public function deleteComponent(int $id) {
-        // fetch, check ownership, remove, flush, return
+    public function deleteComponent(int $id)
+    {
+        try {
+            // fetch, check ownership, remove, flush, return
+            $user = $this->getUser();
+            if(!$user){
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'User not logged in'
+                ], JsonResponse::HTTP_UNAUTHORIZED);
+            }
+            $component = $this->em->getRepository(Component::class)->find($id);
+            if(!$component){
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Component not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+            if($component->getUser()->getId()!== $user->getId()) {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Authentication required'
+                ], JsonResponse::HTTP_UNAUTHORIZED);
+            }
+            $this->em->remove($component);
+            $this->em->flush();
+        } catch (\Throwable $exception) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Something went wrong: ' . $exception->getMessage()
+            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
