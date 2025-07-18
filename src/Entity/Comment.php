@@ -5,29 +5,34 @@ namespace App\Entity;
 use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 #[ORM\Table(name: "comments")]
 class Comment
 {
+    #[Groups(['comment:read', 'project:read', 'user:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
+    #[Groups(['comment:read'])]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(name: "user_id", nullable: false)]
     private ?User $user = null;
 
+    #[Groups(['comment:read'])]
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(name: "project_id", nullable: false)]
     private ?Project $project = null;
 
+    #[Groups(['comment:read'])]
     #[ORM\Column(type: 'text')]
     private ?string $text = null;
 
-    #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int
     {
@@ -67,14 +72,8 @@ class Comment
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(?\DateTimeInterface $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-        return $this;
     }
 }
