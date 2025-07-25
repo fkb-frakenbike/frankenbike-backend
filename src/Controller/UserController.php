@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +15,10 @@ use App\Entity\Profile;
 
 class UserController extends AbstractController
 {
+    public function __construct(private LoggerInterface $logger)
+    {
+    }
+
     #[Route('/api/users', name: 'create_user', methods: ['POST'])]
     public function createUser(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher
     ): JsonResponse 
@@ -34,7 +39,6 @@ class UserController extends AbstractController
         if (isset($data['role'])) {
             $user->setRole($data['role']);
         }
-
         $profile = new Profile();
         $profile->setFirstName($data['firstname'] ?? '');
         $profile->setUser($user);
@@ -53,6 +57,8 @@ class UserController extends AbstractController
     #[Route('/api/users', name: 'list_users', methods: ['GET'])]
     public function getAllUsers(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
+        $this->logger->error('HELLO From the backend YOLO!!');
+
         $users = $em->getRepository(User::class)->findAll();
         $jsonUsers = $serializer->serialize($users, 'json',['groups'=>['user:read']]);
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
