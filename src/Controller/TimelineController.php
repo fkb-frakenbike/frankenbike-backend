@@ -23,29 +23,38 @@ class TimelineController extends AbstractController
     {
         $currentUser = $this->getUser();
 
+        // Vérification utilisateur connecté
         if (!$currentUser instanceof UserInterface) {
             return new JsonResponse(['error' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
+        // Vérification que l'utilisateur demandant est bien le même
         if ($currentUser->getId() !== $userId) {
             return new JsonResponse(['error' => 'Forbidden'], JsonResponse::HTTP_FORBIDDEN);
         }
 
+        // Récupération des projets du user
         $projects = $this->em->getRepository(Project::class)->findBy(['user' => $userId]);
 
         $timelineData = [];
+
         foreach ($projects as $project) {
+            $componentsArr = [];
+            foreach ($project->getComponents() as $component) {
+                $componentsArr[] = [
+                    'id' => $component->getId(),
+                    'name' => $component->getName(),
+                    'description' => $component->getDescription(),
+                    'category' => $component->getCategory()->value,
+                    'origin' => $component->getOrigin()->value,
+                    // Ajoute ici d'autres champs utiles pour ton frontend, ex: image, dates...
+                ];
+            }
+
             $timelineData[] = [
-                'title' => $project->getTitle(),
-                'text' => $project->getDescription(),
-                'img' => $project->getImageUrl(),
-                'likes' => $project->getLikes()->count(),
-                'comments' => $project->getComments()->count(),
-                'userImg' => null,
-                'userName' => null,
-                'nature' => 'project',
-                'variant' => 'purpleCard',
+                'projectId' => $project->getId(),
                 'projectName' => $project->getTitle(),
+                'components' => $componentsArr,
             ];
         }
 
