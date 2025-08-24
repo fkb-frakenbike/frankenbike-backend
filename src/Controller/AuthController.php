@@ -15,6 +15,11 @@ use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
 class AuthController extends AbstractController
 {
+    #[Route('/api/ping', methods: ['GET'])]
+    public function ping(): JsonResponse
+    {
+        return new JsonResponse(['message' => 'pong'], Response::HTTP_OK);
+    }
 
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(
@@ -62,11 +67,13 @@ class AuthController extends AbstractController
                 ->withPath('/')
                 ->withExpires($expiresAt);
         } else {
+            $expiresAt = time()+(60*60);
             $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
                 ->withHttpOnly(true)
                 ->withSecure(true)
                 ->withSameSite("Lax")
-                ->withPath('/');
+                ->withPath('/')
+                ->withExpires($expiresAt);
         }
 
 
