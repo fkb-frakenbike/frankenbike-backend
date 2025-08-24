@@ -11,21 +11,21 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name:"components")]
 class Component
 {
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Id]
     #[ORM\Column(type:"integer")]
     #[ORM\GeneratedValue]
     private ?int $id = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type:"string", length: 255)]
     private ?string $name;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type:'text', nullable:true)]
     private ?string $description = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentOrigin::class)]
     private ComponentOrigin $origin; //enum
 
@@ -34,11 +34,11 @@ class Component
     #[ORM\JoinColumn(name: "project_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Project $project = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentCategory::class)]
     private ComponentCategory $category;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable  $createdAt;
 

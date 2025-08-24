@@ -15,7 +15,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name: "projects")]
 class Project
 {
-    #[Groups(['project:read', 'user:read', 'like:read','comment:read'])]
+    #[Groups(['project:read', 'user:read', 'like:read','comment:read', 'component:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
