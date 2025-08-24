@@ -8,7 +8,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Entity\Profile;
-use App\Entity\User;
 
 class ProfileController extends AbstractController
 {
@@ -16,7 +15,7 @@ class ProfileController extends AbstractController
     public function getAllProfiles(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $profiles = $em->getRepository(Profile::class)->findAll();
-        $jsonProfiles = $serializer->serialize($profiles, 'json');
+        $jsonProfiles = $serializer->serialize($profiles, 'json',['groups'=>['profile:read']]);
         return new JsonResponse($jsonProfiles, JsonResponse::HTTP_OK, [], true);
     }
 
@@ -27,7 +26,7 @@ class ProfileController extends AbstractController
         if (!$profile) {
             return new JsonResponse(['error' => 'Profile not found'], JsonResponse::HTTP_NOT_FOUND);
         }
-        $jsonProfile = $serializer->serialize($profile, 'json');
+        $jsonProfile = $serializer->serialize($profile, 'json',['groups'=>['profile:read']]);
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 
@@ -62,7 +61,7 @@ class ProfileController extends AbstractController
         $em->persist($profile);
         $em->flush();
 
-        $jsonProfile = $serializer->serialize($profile, 'json');
+        $jsonProfile = $serializer->serialize($profile, 'json',['groups'=>['profile:read']]);
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 }

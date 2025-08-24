@@ -37,6 +37,10 @@ security:
             logout: true
             # acts as entry point when no token is present
             entry_point: jwt
+            remember_me:
+                secret: '%kernel.secret%'
+                signature_properties: [ password ]
+
         main:
             lazy: true
             provider: app_user_provider

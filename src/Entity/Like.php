@@ -5,24 +5,33 @@ namespace App\Entity;
 use App\Repository\LikeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: LikeRepository::class)]
 #[ORM\Table(name: "likes")]
 class Like
 {
+    #[Groups(['like:read', 'user:read', 'project:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['like:read'])]
     #[ORM\ManyToOne(inversedBy: 'likes')]
     private ?User $user = null;
 
+    #[Groups(['like:read'])]
     #[ORM\ManyToOne(inversedBy: 'likes')]
     private ?Project $project = null;
 
-    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
-    private ?\DateTime $created_at = null;
+    #[ORM\Column(type: "datetime_immutable")]
+    private ?\DateTimeImmutable $created_at = null;
+
+    public function __construct()
+    {
+        $this->created_at = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -51,14 +60,9 @@ class Like
         return $this;
     }
 
-    public function getCreated_at(): ?\DateTime
+    public function getCreated_at(): ?\DateTimeImmutable
     {
         return $this->created_at;
     }
-    public function setCreated_at(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
 
-        return $this;
-    }
 }

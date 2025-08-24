@@ -3,48 +3,58 @@
 namespace App\Entity;
 
 use App\Repository\ProfileRepository;
-use DateTimeInterface;
+use DateTimeI;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
 #[ORM\Table(name: "profiles")]
 class Profile
 {
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'profiles')]
-    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false)]
-    private ?User $user = null;
+    #[Groups(['profile:read', 'user:read'])]
+    #[ORM\OneToOne(targetEntity: User::class, inversedBy: 'profile')]
+    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", unique: true, nullable: false)]
+    private ?User $user= null;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $nickname = null;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(name: "first_name", length: 255, nullable: true)]
     private ?string $firstName = null;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(name: "last_name", length: 255, nullable: true)]
     private ?string $lastName = null;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(type: "date", nullable: true)]
-    private ?DateTimeInterface $birthdate = null;
+    private ?\DateTime $birthdate = null;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(name: "photo_url", length: 255, nullable: true)]
     private ?string $photoUrl = null;
 
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private DateTime $createdAt;
+    #[Groups(['profile:read', 'user:read'])]
+    #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTimeImmutable $createdAt;
 
+    #[Groups(['profile:read', 'user:read'])]
     #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private DateTime $updatedAt;
+    private \DateTime $updatedAt;
 
     public function __construct()
     {
-        $this->createdAt = new DateTime();
-        $this->updatedAt = new DateTime();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTime();
     }
 
     public function getId(): ?int
@@ -99,12 +109,12 @@ class Profile
         return $this;
     }
 
-    public function getBirthdate(): ?DateTime
+    public function getBirthdate(): ?\DateTime
     {
         return $this->birthdate;
     }
 
-    public function setBirthdate(?DateTimeInterface $birthdate): static
+    public function setBirthdate(?\DateTime $birthdate): static
     {
         $this->birthdate = $birthdate;
 
@@ -123,17 +133,17 @@ class Profile
         return $this;
     }
 
-    public function getCreatedAt(): DateTime
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DateTime
+    public function getUpdatedAt(): \DateTime
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(DateTime $updatedAt): static
+    public function setUpdatedAt(\DateTime $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 

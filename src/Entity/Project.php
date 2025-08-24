@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Entity;
 
@@ -6,51 +7,70 @@ use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\Table(name: "projects")]
 class Project
 {
+    #[Groups(['project:read', 'user:read', 'like:read','comment:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'projects')]
-    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
-    private ?User $user = null;
+    #[Groups(['project:read'])]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'projects')]
+    private ?User $user=null;
 
-    #[ORM\Column(length: 100)]
+    #[Groups(['project:read'])]
+    #[ORM\Column(length: 255,  nullable: false)]
     private ?string $title = null;
 
+    #[Groups(['project:read'])]
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $description = null;
 
     // Add the created_at column from the database
-    #[ORM\Column(name: "created_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
-    private \DateTime $createdAt;
+    #[Groups(['project:read'])]
+    #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
+    private \DateTimeImmutable $createdAt;
 
+    #[Groups(['project:read'])]
     #[ORM\Column(name: "updated_at", type: "datetime", options: ['default' => "CURRENT_TIMESTAMP"])]
     private \DateTime $updatedAt;
+
+    #[Groups(['project:read'])]
+    #[ORM\Column(name: "image_url",length: 255,  nullable: false)]
+    private string $imageUrl= "";
 
     /**
      * A project can have multiple comments
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"])]
+    #[Groups(['project:read'])]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $comments;
+
+    #[Groups(['project:read'])]
+    #[ORM\OneToMany(targetEntity: Component::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
+    private Collection $components;
+
+
 
     /**
      * A project can have multiple likes (some might be user-likes referencing this project)
      */
-    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"])]
+    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $likes;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
-        //$this->comments = new ArrayCollection();
+        $this->comments = new ArrayCollection();
+        $this->components = new ArrayCollection();
         $this->likes = new ArrayCollection();
     }
 
@@ -95,16 +115,9 @@ class Project
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTime
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTime $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
     }
 
     public function getUpdatedAt(): ?\DateTime
@@ -149,5 +162,62 @@ class Project
         return $this;
     }
 
+    public function getImageUrl(): string
+    {
+        return $this->imageUrl;
+    }
 
+    public function setImageUrl(string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
+        return $this;
+    }
+
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): static
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setProject($this); // set the owning side!
+        }
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): static
+    {
+        if ($this->comments->removeElement($comment)) {
+            if($comment->getProject()===$this){
+                $comment->setProject(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getComponents(): Collection
+    {
+        return $this->components;
+    }
+
+    public function addComponent(Component $component): static
+    {
+        if(!$this->components->contains($component)) {
+            $this->components->add($component);
+            $component->setProject($this);
+        }
+        return $this;
+    }
+
+    public function removeComponent(Component $component): static
+    {
+        if ($this->components->removeElement($component)) {
+            if ($component->getProject() === $this) {
+                $component->setProject(null);
+            }
+        }
+        return $this;
+    }
 }
