@@ -3,39 +3,47 @@
 declare(strict_types=1);
 
 namespace App\Controller;
-
 use App\Entity\Project;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class SubUserController extends UserController
 {
-    private EntityManagerInterface $em;
-    private SerializerInterface $serializer;
-
-    public function __construct(EntityManagerInterface $em, SerializerInterface $serializer)
-    {
-        $this->em = $em;
-        $this->serializer = $serializer;
-    }
+    public function __construct( private EntityManagerInterface $em, SerializerInterface $serializer)
+    {}
 
     #[Route('/api/me', name: 'me', methods: ['GET'])]
-    public function apiMe(): JsonResponse
+    public function apiMe(SerializerInterface $serializer): JsonResponse
     {
         $user = $this->getUser();
+        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user]);
 
-        if (!$user) {
-            return new JsonResponse(['error' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
-        }
+        $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+//        $projectData = [];
+//        foreach ($projects as $project) {
+//            $projectData[] = [
+//                'id' => $project->getId(),
+//                'title' => $project->getTitle(),
+//                'description' => $project->getDescription(),
+//                'imageUrl' => $project->getImageUrl(),
+//                'createdAt' => $project->getCreatedAt()?->format('c'),
+//                'updatedAt' => $project->getUpdatedAt()?->format('c'),
+//            ];
+//        }
 
-        // Simple réponse pour test
-        return new JsonResponse([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'username' => $user->getUserIdentifier(),
-        ]);
+        # return $this->json($this->getUser());
+//        return new JsonResponse([
+//            'id' => $user->getId(),
+//            'email' => $user->getEmail(),
+//            'roles' => $user->getRoles(),
+//            'createdAt' => $user->getCreatedAt()?->format('c'),
+//            'projects' => $projectData, // Optional, or you can fill with IDs or names if needed
+//            'likes' => [],    // Same
+//            'userIdentifier' => method_exists($user, 'getUserIdentifier') ? $user->getUserIdentifier() : null,
+//        ]);
+        return new JsonResponse($projectsJson,JsonResponse::HTTP_OK, [], true);
     }
-}
 
+}
