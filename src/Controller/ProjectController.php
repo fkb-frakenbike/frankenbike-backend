@@ -152,6 +152,7 @@ class ProjectController extends AbstractController
                 ], JsonResponse::HTTP_NOT_FOUND);
             }
 
+
             // Make sure the user can only update their own projects (unless admin)
             if ($project->getUser()->getId() !== $user->getId()) {
                 return new JsonResponse([
