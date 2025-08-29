@@ -1,31 +1,48 @@
-# Use official PHP image with required extensions
-FROM php:8.3-fpm
+# ---- Build stage: install deps & composer vendor --------------------------------
+FROM php:8.3-fpm AS build
 
-# Set working directory
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    unzip \
-    git \
-    curl \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    && docker-php-ext-install pdo pdo_mysql gd
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl unzip libicu-dev libzip-dev \
+    libpng-dev libjpeg-dev libfreetype6-dev \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install -j$(nproc) intl pdo_mysql zip gd opcache
 
-RUN docker-php-ext-install pdo pdo_mysql
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Copy application code
+# Copy only composer manifests first to cache dependencies
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+# Now copy the rest of the source
 COPY . .
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html
+# ---- Runtime stage: copy only what we need -------------------------------------
+FROM php:8.3-fpm AS runtime
 
-# Expose port for PHP-FPM
+# Create non-root user/group (match www-data uid/gid if you like)
+RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
+
+WORKDIR /var/www/html
+
+# Copy PHP extensions built/installed already are in base image layers
+# Copy app & vendor from build stage; own by www-data
+COPY --chown=www-data:www-data --from=build /app ./
+
+# Opcache for prod
+RUN { \
+  echo 'opcache.enable=1'; \
+  echo 'opcache.enable_cli=0'; \
+  echo 'opcache.validate_timestamps=0'; \
+  echo 'opcache.max_accelerated_files=20000'; \
+  echo 'opcache.memory_consumption=128'; \
+  echo 'opcache.interned_strings_buffer=16'; \
+} > /usr/local/etc/php/conf.d/opcache.ini
+
+USER www-data
 EXPOSE 9000
-
-CMD ["php-fpm"]
+CMD ["php-fpm", "-F"]
