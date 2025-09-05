@@ -47,7 +47,7 @@ class ComponentController extends AbstractController
                     'message' => 'Project not found'
                 ], JsonResponse::HTTP_NOT_FOUND);
             }
-            if ($project->getUser()->getId() !== $user->getId()) {
+            if ($project->getProject()->getUser()->getId() !== $user->getId()) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Not authorized'
@@ -119,7 +119,7 @@ class ComponentController extends AbstractController
             ], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        if($project->getUser()->getId()!== $user->getId()) {
+        if($project->getProject()->getUser()->getId() !== $user->getId()) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Authentication required'
@@ -138,7 +138,6 @@ class ComponentController extends AbstractController
     public function getComponent(int $id)
     {
         try {
-            // fetch, check ownership, return
             $user= $this->getUser();
             if(!$user) {
                 $this->logger->info("User not logged in");
@@ -154,26 +153,24 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if($component->getUser()->getId()!== $user->getId()) {
-                return new JsonResponse(['status' => 'error',
+            if($component->getProject()->getUser()->getId() !== $user->getId()) {
+                return new JsonResponse([
+                    'status' => 'error',
                     'message' => 'Authentication required'
-                ], Response::HTTP_NOT_FOUND);
+                ], Response::HTTP_UNAUTHORIZED);
             }
-            return new JsonResponse(
-                $component,
-                Response::HTTP_OK,
-                [],
-                true
-            );
+            // Sérialisation avant retour JSON
+            $jsonComponent = $this->serializer->serialize($component, 'json',['groups' => ['component:read']]);
+            return new JsonResponse($jsonComponent, Response::HTTP_OK, [], true);
         } catch (\Throwable $exception) {
-            $this->logger->error('Error in createComponent: '.$exception->getMessage());
+            $this->logger->error('Error in getComponent: '.$exception->getMessage());
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Something went wrong. '.$exception->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
     }
+
 
     #[Route('/api/components/{id}', methods: ['PUT', 'PATCH'])]
     public function updateComponent(Request $req, int $id)
@@ -196,7 +193,7 @@ class ComponentController extends AbstractController
         }
 
         // decode, update allowed fields, flush, return
-        if($component->getUser()->getId()!== $user->getId()) {
+        if($component->getProject()->getUser()->getId() !== $user->getId()) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Authentication required'
@@ -240,7 +237,7 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if($component->getUser()->getId()!== $user->getId()) {
+            if($component->getProject()->getUser()->getId() !== $user->getId()) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'
