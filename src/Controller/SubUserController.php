@@ -15,12 +15,12 @@ class SubUserController extends UserController
     {}
 
     #[Route('/api/me', name: 'me', methods: ['GET'])]
-    public function apiMe(): JsonResponse
+    public function apiMe(SerializerInterface $serializer): JsonResponse
     {
         $user = $this->getUser();
         $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user]);
 
-        $projectsJson = $serializer->serialize($projects, 'json');
+        $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
 //        $projectData = [];
 //        foreach ($projects as $project) {
 //            $projectData[] = [

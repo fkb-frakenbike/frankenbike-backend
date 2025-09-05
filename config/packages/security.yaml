@@ -65,6 +65,7 @@ security:
     access_control:
         # Allow unauthenticated calls ONLY to these two API endpoints
         - { path: ^/api/login$,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/ping,  roles: PUBLIC_ACCESS }
         - { path: ^/api/users$,  roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
 
