@@ -66,7 +66,18 @@ class ProjectController extends AbstractController
     #[Route('/api/projects', name: 'get_projects', methods: ['GET'])]
     public function getAllProjects(Request $request): JsonResponse
     {
-        $projects = $this->em->getRepository(Project::class)->findAll();
+        $page = max(1, (int)$request->query->get('page', 1));
+    $limit = max(1, min(100, (int)$request->query->get('limit', 10))); // Limite max à 100
+
+    $offset = ($page - 1) * $limit;
+
+    $projectRepo = $this->em->getRepository(Project::class);
+
+    $projects = $projectRepo->findBy([], ['createdAt' => 'DESC'], $limit, $offset);
+
+    $total = $projectRepo->count([]);
+
+    $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
 
         //to avoid looping infintely because of going over thserializer that
         // always reaches the next child relationship and then the child will be
@@ -89,7 +100,13 @@ class ProjectController extends AbstractController
 
         $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
 
-        return new JsonResponse($jsonProjects, JsonResponse::HTTP_OK, [], true);
+        return new JsonResponse([
+        'data' => json_decode($jsonProjects),
+        'page' => $page,
+        'limit' => $limit,
+        'total' => $total,
+        'hasMore' => ($offset + $limit) < $total
+    ],JsonResponse::HTTP_OK,[]);
     }
 
     #[Route('/api/projects/{id}', name: 'get_project', methods: ['GET'])]
