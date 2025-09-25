@@ -33,7 +33,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Map to the "role" column in your DB
     #[Groups(['user:read', 'profile:read'])]
-    #[ORM\Column(type: "string", length: 5, options: ["default" => "user"])]
+    #[ORM\Column(name: "role", type: "string", length: 5, options: ["default" => "user"])]
     private ?string $role;
 
     // Add the created_at column from the database

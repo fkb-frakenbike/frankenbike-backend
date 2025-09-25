@@ -27,7 +27,7 @@ class Component
 
     #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentOrigin::class)]
-    private ComponentOrigin $origin; //enum
+    private ComponentOrigin $origin;
 
     #[Groups(['component:read'])]
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: "components")]

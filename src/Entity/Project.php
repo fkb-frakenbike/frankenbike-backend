@@ -23,6 +23,7 @@ class Project
 
     #[Groups(['project:read'])]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'projects')]
+    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?User $user=null;
 
     #[Groups(['project:read'])]

@@ -19,11 +19,17 @@ class Like
 
     #[Groups(['like:read'])]
     #[ORM\ManyToOne(inversedBy: 'likes')]
+    #[ORM\JoinColumn(name: "user_id", nullable: false, onDelete: "CASCADE")]
     private ?User $user = null;
 
     #[Groups(['like:read'])]
     #[ORM\ManyToOne(inversedBy: 'likes')]
+    #[ORM\JoinColumn(name: "project_id", nullable: true, onDelete: "CASCADE")]
     private ?Project $project = null;
+
+    #[ORM\ManyToOne(targetEntity: Comment::class, inversedBy: null)]
+    #[ORM\JoinColumn(name: "comment_id", nullable: true, onDelete: "CASCADE")]
+    private ?Comment $comment = null;
 
     #[ORM\Column(type: "datetime_immutable")]
     private ?\DateTimeImmutable $created_at = null;
@@ -53,12 +59,23 @@ class Like
     {
         return $this->project;
     }
-    public function setProject(?Project $project): static
-    {
-        $this->project = $project;
 
+    public function setProject(?Project $project): self {
+        $this->project = $project;
+        if ($project !== null) $this->comment = null;
         return $this;
     }
+
+    public function setComment(?Comment $comment): self {
+        $this->comment = $comment;
+        if ($comment !== null) $this->project = null;
+        return $this;
+    }
+
+    public function getComment(): ?Comment {
+        return $this->comment;
+    }
+
 
     public function getCreated_at(): ?\DateTimeImmutable
     {
