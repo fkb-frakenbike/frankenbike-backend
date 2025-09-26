@@ -55,7 +55,7 @@ class ComponentController extends AbstractController
                 ], JsonResponse::HTTP_UNAUTHORIZED);
             }
 
-// 3. read multipart fields (NOT JSON)
+            // 3. read multipart fields (NOT JSON)
             $name        = (string) $req->request->get('name', '');
             $description = (string) ($req->request->get('description') ?? '');
             $categoryRaw = (string) $req->request->get('category', '');
@@ -75,7 +75,7 @@ class ComponentController extends AbstractController
                 return new JsonResponse(['status' => 'error', 'message' => 'Invalid origin'], 400);
             }
 
-// file is required
+            // file is required
             $file = $req->files->get('file');
             if (!$file) {
                 return new JsonResponse(['status' => 'error', 'message' => 'Missing form field "file"'], 400);
@@ -88,7 +88,7 @@ class ComponentController extends AbstractController
                 return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
             }
 
-// 4. create entity first (to get its DB id), then upload, then save photo meta
+            // 4. create entity first (to get its DB id), then upload, then save photo meta
             $component = new Component();
             $component->setProject($project);
             $component->setName($name);
@@ -106,7 +106,7 @@ class ComponentController extends AbstractController
             // upload to R2 (Flysystem)
             $photoStorage->upload($file, $key);
 
-        // save photo meta on the component
+            // save photo meta on the component
             $component->setPhotoS3Key($key);
             $component->setPhotoMimeType($file->getMimeType() ?? 'image/jpeg');
             $component->setPhotoSize((int) ($file->getSize() ?? 0));
