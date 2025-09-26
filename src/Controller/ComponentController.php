@@ -107,7 +107,7 @@ class ComponentController extends AbstractController
             $photoStorage->upload($file, $key);
 
             // save photo meta on the component
-            $component->setPhotoS3Key($key);
+            $component->setPhotoS3Key($photoStorage->publicUrl($key) ?? '');
             $component->setPhotoMimeType($file->getMimeType() ?? 'image/jpeg');
             $component->setPhotoSize((int) ($file->getSize() ?? 0));
 
