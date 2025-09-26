@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\ProfileRepository;
-use DateTimeI;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -20,11 +19,11 @@ class Profile
 
     #[Groups(['profile:read', 'user:read'])]
     #[ORM\OneToOne(targetEntity: User::class, inversedBy: 'profile')]
-    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", unique: true, nullable: false)]
+    #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", unique: true, nullable: false, onDelete: "CASCADE")]
     private ?User $user= null;
 
     #[Groups(['profile:read', 'user:read'])]
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 100, nullable: true)]
     private ?string $nickname = null;
 
     #[Groups(['profile:read', 'user:read'])]
@@ -78,7 +77,7 @@ class Profile
         return $this->nickname;
     }
 
-    public function setNickname(string $nickname): static
+    public function setNickname(?string $nickname): static
     {
         $this->nickname = $nickname;
 
@@ -90,7 +89,7 @@ class Profile
         return $this->firstName;
     }
 
-    public function setFirstName(string $firstName): static
+    public function setFirstName(?string $firstName): static
     {
         $this->firstName = $firstName;
 
@@ -102,7 +101,7 @@ class Profile
         return $this->lastName;
     }
 
-    public function setLastName(string $lastName): static
+    public function setLastName(?string $lastName): static
     {
         $this->lastName = $lastName;
 
@@ -126,7 +125,7 @@ class Profile
         return $this->photoUrl;
     }
 
-    public function setPhotoUrl(string $photoUrl): static
+    public function setPhotoUrl(?string $photoUrl): static
     {
         $this->photoUrl = $photoUrl;
 

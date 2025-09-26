@@ -19,12 +19,12 @@ class Comment
 
     #[Groups(['comment:read'])]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(name: "user_id", nullable: false)]
+    #[ORM\JoinColumn(name: "user_id", nullable: false, onDelete: "CASCADE")]
     private ?User $user = null;
 
     #[Groups(['comment:read'])]
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: 'comments')]
-    #[ORM\JoinColumn(name: "project_id", nullable: false)]
+    #[ORM\JoinColumn(name: "project_id", nullable: false, onDelete: "CASCADE")]
     private ?Project $project = null;
 
     #[Groups(['comment:read'])]
@@ -33,6 +33,11 @@ class Comment
 
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {

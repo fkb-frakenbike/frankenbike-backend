@@ -8,6 +8,7 @@ use App\Entity\Component;
 use App\Entity\Project;
 use App\Enum\ComponentCategory;
 use App\Enum\ComponentOrigin;
+use App\Service\ComponentPhotoStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,7 +27,7 @@ class ComponentController extends AbstractController
     ){}
 
     #[Route('/api/projects/{projectId}/components', methods: ['POST'])]
-    public function create(Request $req, int $projectId): JsonResponse
+    public function create(Request $req, int $projectId, ComponentPhotoStorage $photoStorage): JsonResponse
     {
         try {
             // 1. getUser, ensure authenticated
@@ -54,37 +55,64 @@ class ComponentController extends AbstractController
                 ], JsonResponse::HTTP_UNAUTHORIZED);
             }
 
-            // 3. decode body: name, description, category, origin
-            $data = json_decode($req->getContent(), true);
+            // 3. read multipart fields (NOT JSON)
+            $name        = (string) $req->request->get('name', '');
+            $description = (string) ($req->request->get('description') ?? '');
+            $categoryRaw = (string) $req->request->get('category', '');
+            $originRaw   = (string) $req->request->get('origin', '');
 
-            $categoryString = ComponentCategory::tryFrom($data['category']);
-            $originString = ComponentOrigin::tryFrom(($data['origin']));
-            // 4. validate: category/origin in allowed values
+            if ($name === '') {
+                return new JsonResponse(['status' => 'error', 'message' => 'Name is required'], 400);
+            }
 
-            if (!($categoryString)) {
-                return new JsonResponse([
-                    'status' => 'error',
-                    'message' => 'Invalid category'
-                ], 400);
+            $category = ComponentCategory::tryFrom($categoryRaw);
+            if (!$category) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Invalid category'], 400);
             }
-            if (!$originString) {
-                return new JsonResponse([
-                    'status' => 'error',
-                    'message' => 'Invalid category'
-                ], 400);
+
+            $origin = ComponentOrigin::tryFrom($originRaw);
+            if (!$origin) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Invalid origin'], 400);
             }
-            // 5. create new Component, set fields, link to project
+
+            // file is required
+            $file = $req->files->get('file');
+            if (!$file) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Missing form field "file"'], 400);
+            }
+            $allowed = ['image/jpeg','image/png','image/webp'];
+            if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
+            }
+            if (($file->getSize() ?? 0) > 10 * 1024 * 1024) {
+                return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
+            }
+
+            // 4. create entity first (to get its DB id), then upload, then save photo meta
             $component = new Component();
-            $component->setName($data['name']);
-            $component->setDescription($data['description']);
-            $component->setCategory($categoryString);
-            $component->setOrigin($originString);
-
             $component->setProject($project);
+            $component->setName($name);
+            $component->setDescription($description);
+            $component->setCategory($category);
+            $component->setOrigin($origin);
 
-            // 6. persist and flush
             $this->em->persist($component);
+            $this->em->flush(); // now we have $component->getId()
+
+            $ext = strtolower($file->guessExtension() ?: 'bin');
+            // key shape in R2: components/<projectId>/<componentId>.<ext>
+            $key = sprintf('%d/%d.%s', $projectId, $component->getId(), $ext);
+
+            // upload to R2 (Flysystem)
+            $photoStorage->upload($file, $key);
+
+            // save photo meta on the component
+            $component->setPhotoS3Key($key);
+            $component->setPhotoMimeType($file->getMimeType() ?? 'image/jpeg');
+            $component->setPhotoSize((int) ($file->getSize() ?? 0));
+
             $this->em->flush();
+
 
             $jsonComponent = $this->serializer->serialize($component, 'json',['groups' => ['component:read']]);
             // 7. return 201 + data
@@ -154,7 +182,7 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if($component->getUser()->getId()!== $user->getId()) {
+            if ($component->getProject()->getUser()->getId() !== $user->getId()) {
                 return new JsonResponse(['status' => 'error',
                     'message' => 'Authentication required'
                 ], Response::HTTP_NOT_FOUND);
@@ -196,7 +224,7 @@ class ComponentController extends AbstractController
         }
 
         // decode, update allowed fields, flush, return
-        if($component->getUser()->getId()!== $user->getId()) {
+        if ($component->getProject()->getUser()->getId() !== $user->getId()) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Authentication required'
@@ -210,7 +238,6 @@ class ComponentController extends AbstractController
         if(isset($data['category'])) $component->setCategory($data['category']);
         if(isset($data['origin'])) $component->setOrigin($data['origin']);
 
-        $component->setUpdatedAt(new \DateTime('now'));
 
 //        no need to persist this data since it is already created this component
         //$this->em->persist($component);
@@ -240,7 +267,7 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if($component->getUser()->getId()!== $user->getId()) {
+            if ($component->getProject()->getUser()->getId() !== $user->getId()) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'

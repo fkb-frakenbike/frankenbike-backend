@@ -1,0 +1,22 @@
+flysystem:
+    storages:
+        profiles.storage:
+            adapter: 'aws'
+            options:
+                client: 'app.r2_s3_client'
+                bucket: '%env(R2_BUCKET)%'
+                prefix: 'profiles'
+
+        projects.storage:
+            adapter: 'aws'
+            options:
+                client: 'app.r2_s3_client'
+                bucket: '%env(R2_BUCKET)%'
+                prefix: 'project-covers'
+
+        components.storage:
+            adapter: 'aws'
+            options:
+                client: 'app.r2_s3_client'
+                bucket: '%env(R2_BUCKET)%'
+                prefix: 'components'
