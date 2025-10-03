@@ -61,4 +61,4 @@ jobs:
         run: php bin/console doctrine:schema:update --env=test --force
 
       - name: Run PHPUnit
-        run: ./vendor/bin/phpunit
+        run: ./vendor/bin/phpunit --coverage-text
