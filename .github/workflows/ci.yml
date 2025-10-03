@@ -50,13 +50,15 @@ jobs:
             sleep 2
           done
 
+      - name: Create test database (raw SQL)
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction
 
-      - name: Create test database
-        run: |
-          php bin/console doctrine:database:create --env=test
-          php bin/console doctrine:schema:update --env=test --force
+      - name: Update schema
+        run: php bin/console doctrine:schema:update --env=test --force
 
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit
