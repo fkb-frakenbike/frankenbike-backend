@@ -1,4 +1,7 @@
 <?php
+/**
+ * @covers \App\Entity\User
+ */
 
 namespace App\Tests\Unit\Entity;
 

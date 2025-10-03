@@ -1,7 +1,7 @@
 <?php
 // tests/ConnectionTest.php
 
-namespace App\Tests;
+namespace App\Tests\Integration\Controller;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
