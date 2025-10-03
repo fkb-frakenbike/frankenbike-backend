@@ -27,8 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use .env.local as .env
-        run: cp .env.local .env
+      - name: Create .env file
+        run: |
+          echo "APP_ENV=test" >> .env
+          echo "APP_SECRET=${{ secrets.APP_SECRET }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}" >> .env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+          echo "JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}" >> .env
+          echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" >> .env
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
