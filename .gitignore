@@ -15,8 +15,7 @@
 ###< symfony/framework-bundle ###
 
 # Ignore .env files (DO NOT commit sensitive credentials)
-.env
-.env.*
+.env*
 # Ignore MySQL database files (Docker volumes)
 mysql_data/
 sql/
