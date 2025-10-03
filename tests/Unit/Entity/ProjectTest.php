@@ -1,4 +1,7 @@
 <?php
+/**
+ * @covers \App\Entity\Project
+ */
 
 namespace App\Tests\Unit\Entity;
 
@@ -6,9 +9,6 @@ use App\Entity\Project;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \App\Entity\Project
- */
 class ProjectTest extends TestCase
 {
     public function testCanGetAndSetData(): void
