@@ -7,6 +7,9 @@ use App\Entity\Project;
 use App\Entity\User;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @covers \App\Entity\User
+ */
 class UserTest extends TestCase
 {
     public function testCanGetAndSetData(): void
