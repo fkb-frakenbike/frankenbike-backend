@@ -36,6 +36,7 @@ jobs:
           echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
           echo "JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}" >> .env
           echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" >> .env
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -43,14 +44,14 @@ jobs:
           extensions: mbstring, intl, pdo_mysql
           coverage: none
 
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction
-
       - name: Wait for MySQL
         run: |
           until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do
             sleep 2
           done
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction
 
       - name: Create test database
         run: |
