@@ -295,4 +295,35 @@ class ProjectController extends AbstractController
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 
+    #[Route('/api/users/{userId}/projects', name: 'get_user_projects', methods: ['GET'])]
+    public function getProjectsByUser(int $userId, Request $request): JsonResponse
+    {
+        $page = max(1, (int)$request->query->get('page', 1));
+        $limit = max(1, min(100, (int)$request->query->get('limit', 10)));
+        $offset = ($page - 1) * $limit;
+
+        $user = $this->em->getRepository(\App\Entity\User::class)->find($userId);
+        if (!$user) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'User not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $projectRepo = $this->em->getRepository(Project::class);
+        $criteria = ['user' => $user];
+        $projects = $projectRepo->findBy($criteria, ['createdAt' => 'DESC'], $limit, $offset);
+        $total = $projectRepo->count($criteria);
+
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+
+        return new JsonResponse([
+            'data' => json_decode($jsonProjects),
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'hasMore' => ($offset + $limit) < $total
+        ], JsonResponse::HTTP_OK, []);
+    }
+
 }
