@@ -11,36 +11,48 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name:"components")]
 class Component
 {
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Id]
     #[ORM\Column(type:"integer")]
     #[ORM\GeneratedValue]
     private ?int $id = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type:"string", length: 255)]
     private ?string $name;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type:'text', nullable:true)]
     private ?string $description = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentOrigin::class)]
-    private ComponentOrigin $origin; //enum
+    private ComponentOrigin $origin;
 
     #[Groups(['component:read'])]
     #[ORM\ManyToOne(targetEntity: Project::class, inversedBy: "components")]
     #[ORM\JoinColumn(name: "project_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ?Project $project = null;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "string", length: 50, enumType: ComponentCategory::class)]
     private ComponentCategory $category;
 
-    #[Groups(['component:read'])]
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type: "datetime_immutable")]
     private \DateTimeImmutable  $createdAt;
+
+    #[Groups(['component:read', 'project:read'])]
+    #[ORM\Column(name: "photo_s3_key", type: "string", length: 512, options: ['default' => ''])]
+    private string $photoS3Key = '';
+
+    #[Groups(['component:read', 'project:read'])]
+    #[ORM\Column(name: "photo_mime_type", type: "string", length: 128, options: ['default' => 'image/jpeg'])]
+    private string $photoMimeType = 'image/jpeg';
+
+    #[Groups(['component:read', 'project:read'])]
+    #[ORM\Column(name: "photo_size", type: "bigint", options: ['default' => 0])]
+    private int $photoSize = 0;
 
     public function __construct()
     {
@@ -107,5 +119,38 @@ class Component
     public function getProject(): ?Project
     {
         return $this->project;
+    }
+
+    public function getPhotoS3Key(): string
+    {
+        return $this->photoS3Key;
+    }
+
+    public function setPhotoS3Key(string $key): self
+    {
+        $this->photoS3Key = $key;
+        return $this;
+    }
+
+    public function getPhotoMimeType(): string
+    {
+        return $this->photoMimeType;
+    }
+
+    public function setPhotoMimeType(string $mime): self
+    {
+        $this->photoMimeType = $mime;
+        return $this;
+    }
+
+    public function getPhotoSize(): int
+    {
+        return $this->photoSize;
+    }
+
+    public function setPhotoSize(int $size): self
+    {
+        $this->photoSize = $size;
+        return $this;
     }
 }

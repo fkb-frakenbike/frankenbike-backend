@@ -20,3 +20,24 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    app.r2_s3_client:
+        class: Aws\S3\S3Client
+        arguments:
+            - version: 'latest'
+              region: '%env(R2_REGION)%'
+              endpoint: '%env(R2_ENDPOINT)%'
+              use_path_style_endpoint: false
+              credentials:
+                  key: '%env(R2_ACCESS_KEY_ID)%'
+                  secret: '%env(R2_SECRET_ACCESS_KEY)%'
+
+    # --- Tiny wrappers to compute public URLs consistently ---
+    App\Service\ProfilePhotoStorage:
+        arguments: { $storage: '@profiles.storage', $publicBase: '%env(default::R2_PUBLIC_BASE_URL)%' }
+
+    App\Service\ProjectPhotoStorage:
+        arguments: { $storage: '@projects.storage', $publicBase: '%env(default::R2_PUBLIC_BASE_URL)%' }
+
+    App\Service\ComponentPhotoStorage:
+        arguments: { $storage: '@components.storage', $publicBase: '%env(default::R2_PUBLIC_BASE_URL)%' }

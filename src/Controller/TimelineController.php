@@ -8,14 +8,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class TimelineController extends AbstractController
 {
     private EntityManagerInterface $em;
+    private SerializerInterface $serializer;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em, SerializerInterface $serializer)
     {
         $this->em = $em;
+        $this->serializer = $serializer;
     }
 
     #[Route('/api/timelines/{userId}', name: 'user_timeline', methods: ['GET'])]
@@ -36,28 +39,9 @@ class TimelineController extends AbstractController
         // Récupération des projets du user
         $projects = $this->em->getRepository(Project::class)->findBy(['user' => $userId]);
 
-        $timelineData = [];
+        // Sérialisation via le serializer avec les groupes
+        $json = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
 
-        foreach ($projects as $project) {
-            $componentsArr = [];
-            foreach ($project->getComponents() as $component) {
-                $componentsArr[] = [
-                    'id' => $component->getId(),
-                    'name' => $component->getName(),
-                    'description' => $component->getDescription(),
-                    'category' => $component->getCategory()->value,
-                    'origin' => $component->getOrigin()->value,
-                    // Ajoute ici d'autres champs utiles pour ton frontend, ex: image, dates...
-                ];
-            }
-
-            $timelineData[] = [
-                'projectId' => $project->getId(),
-                'projectName' => $project->getTitle(),
-                'components' => $componentsArr,
-            ];
-        }
-
-        return new JsonResponse($timelineData, JsonResponse::HTTP_OK);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
 }
