@@ -26,7 +26,7 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/api/projects', name: 'create_project', methods: ['POST'])]
-    public function createProject(Request $request): JsonResponse
+    public function createProject(Request $request, ProjectPhotoStorage $photoStorage): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -36,33 +36,60 @@ class ProjectController extends AbstractController
                     'message' => 'Authentication required'
                 ], Response::HTTP_UNAUTHORIZED);
             }
-            $data = json_decode($request->getContent(), true) ?? [];
-            $this->logger->info(json_encode($data, JSON_PRETTY_PRINT));
-            $this->logger->info($user->getEmail());
+            $title = (string) $request->request->get('title', '');
+            $description = $request->request->get('description') ?? null;
 
-
-            // require title
-            if (empty($data['title'])) {
+            if ($title === '') {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'title is required'
                 ], JsonResponse::HTTP_BAD_REQUEST);
             }
 
+            $file = $request->files->get('file');
+            if (!$file) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Missing form field "file"'], 400);
+            }
+            $allowed = ['image/jpeg','image/png','image/webp'];
+            if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
+            }
+            if (($file->getSize() ?? 0) > 10 * 1024 * 1024) {
+                return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
+            }
+
             $project = new Project();
             $project->setUser($user);
-            $project->setTitle($data['title']);
-
-            // description can be null in your SQL schema
-            $project->setDescription($data['description'] ?? null);
-
-            // image_url is NOT NULL in your SQL -> use empty string until /cover upload
-            $project->setImageUrl($data['imageUrl'] ?? '');
-
+            $project->setTitle($title);
+            $project->setCreatedAt(new \DateTimeImmutable());
+            $project->setUpdatedAt(new \DateTime());
+            $project->setDescription($description);
+            $project->setImageUrl('');
 
             // Save changes to the database
             $this->em->persist($project);
             $this->em->flush();
+
+            $file = $request->files->get('file');
+            if ($file) {
+                $allowed = ['image/jpeg','image/png','image/webp'];
+                if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                    return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
+                }
+                if (($file->getSize() ?? 0) > 10 * 1024 * 1024) {
+                    return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
+                }
+
+                $ext = strtolower($file->guessExtension() ?: 'bin');
+                // key shape: project-covers/<projectId>/<projectId>.<ext>
+                $key = sprintf('%d/%d.%s', $project->getId(), $project->getId(), $ext);
+
+                $photoStorage->upload($file, $key);
+                $url = $photoStorage->publicUrl($key) ?? '';
+
+                $project->setImageUrl($url);
+                $this->em->flush();
+            }
 
             $projectJson = $this->serializer->serialize($project, 'json', ['groups' => 'project:read']);
             return new JsonResponse($projectJson, Response::HTTP_OK, [], true);
@@ -92,7 +119,7 @@ class ProjectController extends AbstractController
         $total = $projectRepo->count([]);
 
 
-        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read', 'user:read']]);
 
         return new JsonResponse([
         'data' => json_decode($jsonProjects),
