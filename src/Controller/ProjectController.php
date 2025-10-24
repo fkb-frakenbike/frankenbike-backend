@@ -31,6 +31,7 @@ class ProjectController extends AbstractController
         try {
             $user = $this->getUser();
             if (!$user) {
+                $this->logger->warning('Tentative de création de projet sans authentification');
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'
@@ -40,6 +41,7 @@ class ProjectController extends AbstractController
             $description = $request->request->get('description') ?? null;
 
             if ($title === '') {
+                $this->logger->warning('Titre manquant lors de la création de projet par ' . $user->getEmail());
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'title is required'
@@ -48,16 +50,15 @@ class ProjectController extends AbstractController
 
             $file = $request->files->get('file');
             if (!$file) {
+            $this->logger->warning('Fichier manquant lors de la création de projet par ' . $user->getEmail());
                 return new JsonResponse(['status' => 'error', 'message' => 'Missing form field "file"'], 400);
             }
             $allowed = ['image/jpeg','image/png','image/webp'];
             if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                $this->logger->warning('Type de fichier invalide (' . $file->getMimeType() . ') pour le projet de ' . $user->getEmail());
                 return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
             }
-            if (($file->getSize() ?? 0) > 10 * 1024 * 1024) {
-                return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
-            }
-
+            
             $project = new Project();
             $project->setUser($user);
             $project->setTitle($title);
@@ -96,7 +97,9 @@ class ProjectController extends AbstractController
 
         } catch (\Throwable $exception) {
             // Log the error and return a clear message
-            $this->logger->error('Error in createProject: ' . $exception->getMessage());
+            $this->logger->error('Error in createProject: ' . $exception->getMessage(), [
+                'exception' => $exception
+            ]);
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Something went wrong. ' . $exception->getMessage()

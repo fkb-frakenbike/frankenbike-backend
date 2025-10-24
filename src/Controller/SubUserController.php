@@ -20,15 +20,8 @@ class SubUserController extends UserController
         $user = $serializer->normalize($this->getUser(), null, ['groups' => ['user:read']]);
         $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user], ['createdAt' => 'DESC']);
 
-        $projectsArray = $serializer->normalize($projects, null, ['groups' => ['project:read']]);
-        return $this->json([
-            'user' => $user,
-            'projects' => $projectsArray,
-            'page' => 1,
-            'limit' => count($projectsArray),
-            'total' => count($projectsArray),
-            'hasMore' => false
-        ], JsonResponse::HTTP_OK);
+    $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:list']]);
+        return new JsonResponse($projectsJson, JsonResponse::HTTP_OK, [], true);
     }
 
 }
