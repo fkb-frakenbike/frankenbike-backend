@@ -166,6 +166,14 @@ class ComponentController extends AbstractController
     public function getComponent(int $id)
     {
         try {
+            if (!is_numeric($id)) {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Invalid component ID'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+            $id = (int) $id;
+
             // fetch, check ownership, return
             $user= $this->getUser();
             if(!$user) {
@@ -183,16 +191,16 @@ class ComponentController extends AbstractController
                 ], Response::HTTP_NOT_FOUND);
             }
             if ($component->getProject()->getUser()->getId() !== $user->getId()) {
-                return new JsonResponse(['status' => 'error',
-                    'message' => 'Authentication required'
-                ], Response::HTTP_NOT_FOUND);
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Not authorized'
+                ], Response::HTTP_FORBIDDEN);
             }
-            return new JsonResponse(
-                $component,
-                Response::HTTP_OK,
-                [],
-                true
-            );
+            // Sérialiser avec les groupes (component:read)
+            $jsonComponent = $this->serializer->serialize($component, 'json', ['groups' => ['component:read']]);
+
+            // Retourner la string JSON (le 4ème argument true signifie que $jsonComponent est déjà du JSON)
+            return new JsonResponse($jsonComponent, Response::HTTP_OK, [], true);
         } catch (\Throwable $exception) {
             $this->logger->error('Error in createComponent: '.$exception->getMessage());
             return new JsonResponse([

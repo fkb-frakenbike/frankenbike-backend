@@ -26,50 +26,80 @@ class ProjectController extends AbstractController
     }
 
     #[Route('/api/projects', name: 'create_project', methods: ['POST'])]
-    public function createProject(Request $request): JsonResponse
+    public function createProject(Request $request, ProjectPhotoStorage $photoStorage): JsonResponse
     {
         try {
             $user = $this->getUser();
             if (!$user) {
+                $this->logger->warning('Tentative de création de projet sans authentification');
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'
                 ], Response::HTTP_UNAUTHORIZED);
             }
-            $data = json_decode($request->getContent(), true) ?? [];
-            $this->logger->info(json_encode($data, JSON_PRETTY_PRINT));
-            $this->logger->info($user->getEmail());
+            $title = (string) $request->request->get('title', '');
+            $description = $request->request->get('description') ?? null;
 
-
-            // require title
-            if (empty($data['title'])) {
+            if ($title === '') {
+                $this->logger->warning('Titre manquant lors de la création de projet par ' . $user->getEmail());
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'title is required'
                 ], JsonResponse::HTTP_BAD_REQUEST);
             }
 
+            $file = $request->files->get('file');
+            if (!$file) {
+            $this->logger->warning('Fichier manquant lors de la création de projet par ' . $user->getEmail());
+                return new JsonResponse(['status' => 'error', 'message' => 'Missing form field "file"'], 400);
+            }
+            $allowed = ['image/jpeg','image/png','image/webp'];
+            if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                $this->logger->warning('Type de fichier invalide (' . $file->getMimeType() . ') pour le projet de ' . $user->getEmail());
+                return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
+            }
+            
             $project = new Project();
             $project->setUser($user);
-            $project->setTitle($data['title']);
-
-            // description can be null in your SQL schema
-            $project->setDescription($data['description'] ?? null);
-
-            // image_url is NOT NULL in your SQL -> use empty string until /cover upload
-            $project->setImageUrl($data['imageUrl'] ?? '');
-
+            $project->setTitle($title);
+            $project->setCreatedAt(new \DateTimeImmutable());
+            $project->setUpdatedAt(new \DateTime());
+            $project->setDescription($description);
+            $project->setImageUrl('');
 
             // Save changes to the database
             $this->em->persist($project);
             $this->em->flush();
+
+            $file = $request->files->get('file');
+            if ($file) {
+                $allowed = ['image/jpeg','image/png','image/webp'];
+                if (!in_array((string)$file->getMimeType(), $allowed, true)) {
+                    return new JsonResponse(['status' => 'error', 'message' => 'Invalid file type'], 400);
+                }
+                if (($file->getSize() ?? 0) > 10 * 1024 * 1024) {
+                    return new JsonResponse(['status' => 'error', 'message' => 'File too large'], 400);
+                }
+
+                $ext = strtolower($file->guessExtension() ?: 'bin');
+                // key shape: project-covers/<projectId>/<projectId>.<ext>
+                $key = sprintf('%d/%d.%s', $project->getId(), $project->getId(), $ext);
+
+                $photoStorage->upload($file, $key);
+                $url = $photoStorage->publicUrl($key) ?? '';
+
+                $project->setImageUrl($url);
+                $this->em->flush();
+            }
 
             $projectJson = $this->serializer->serialize($project, 'json', ['groups' => 'project:read']);
             return new JsonResponse($projectJson, Response::HTTP_OK, [], true);
 
         } catch (\Throwable $exception) {
             // Log the error and return a clear message
-            $this->logger->error('Error in createProject: ' . $exception->getMessage());
+            $this->logger->error('Error in createProject: ' . $exception->getMessage(), [
+                'exception' => $exception
+            ]);
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Something went wrong. ' . $exception->getMessage()
@@ -92,7 +122,7 @@ class ProjectController extends AbstractController
         $total = $projectRepo->count([]);
 
 
-        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read', 'user:read']]);
 
         return new JsonResponse([
         'data' => json_decode($jsonProjects),
@@ -293,6 +323,37 @@ class ProjectController extends AbstractController
 
         $json = $serializer->serialize($project, 'json', ['groups' => ['project:read']]);
         return new JsonResponse($json, Response::HTTP_OK, [], true);
+    }
+
+    #[Route('/api/users/{userId}/projects', name: 'get_user_projects', methods: ['GET'])]
+    public function getProjectsByUser(int $userId, Request $request): JsonResponse
+    {
+        $page = max(1, (int)$request->query->get('page', 1));
+        $limit = max(1, min(100, (int)$request->query->get('limit', 10)));
+        $offset = ($page - 1) * $limit;
+
+        $user = $this->em->getRepository(\App\Entity\User::class)->find($userId);
+        if (!$user) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'User not found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $projectRepo = $this->em->getRepository(Project::class);
+        $criteria = ['user' => $user];
+        $projects = $projectRepo->findBy($criteria, ['createdAt' => 'DESC'], $limit, $offset);
+        $total = $projectRepo->count($criteria);
+
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+
+        return new JsonResponse([
+            'data' => json_decode($jsonProjects),
+            'page' => $page,
+            'limit' => $limit,
+            'total' => $total,
+            'hasMore' => ($offset + $limit) < $total
+        ], JsonResponse::HTTP_OK, []);
     }
 
 }

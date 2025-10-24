@@ -17,33 +17,11 @@ class SubUserController extends UserController
     #[Route('/api/me', name: 'me', methods: ['GET'])]
     public function apiMe(SerializerInterface $serializer): JsonResponse
     {
-        $user = $this->getUser();
-        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user]);
+        $user = $serializer->normalize($this->getUser(), null, ['groups' => ['user:read']]);
+        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user], ['createdAt' => 'DESC']);
 
-        $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
-//        $projectData = [];
-//        foreach ($projects as $project) {
-//            $projectData[] = [
-//                'id' => $project->getId(),
-//                'title' => $project->getTitle(),
-//                'description' => $project->getDescription(),
-//                'imageUrl' => $project->getImageUrl(),
-//                'createdAt' => $project->getCreatedAt()?->format('c'),
-//                'updatedAt' => $project->getUpdatedAt()?->format('c'),
-//            ];
-//        }
-
-        # return $this->json($this->getUser());
-//        return new JsonResponse([
-//            'id' => $user->getId(),
-//            'email' => $user->getEmail(),
-//            'roles' => $user->getRoles(),
-//            'createdAt' => $user->getCreatedAt()?->format('c'),
-//            'projects' => $projectData, // Optional, or you can fill with IDs or names if needed
-//            'likes' => [],    // Same
-//            'userIdentifier' => method_exists($user, 'getUserIdentifier') ? $user->getUserIdentifier() : null,
-//        ]);
-        return new JsonResponse($projectsJson,JsonResponse::HTTP_OK, [], true);
+    $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:list']]);
+        return new JsonResponse($projectsJson, JsonResponse::HTTP_OK, [], true);
     }
 
 }
