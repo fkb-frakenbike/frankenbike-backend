@@ -3,47 +3,37 @@
 declare(strict_types=1);
 
 namespace App\Controller;
-use App\Entity\Project;
-use Doctrine\ORM\EntityManagerInterface;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
-class SubUserController extends UserController
+class SubUserController extends AbstractController
 {
-    public function __construct( private EntityManagerInterface $em, SerializerInterface $serializer)
-    {}
+    public function __construct(private SerializerInterface $serializer) {}
 
-    #[Route('/api/me', name: 'me', methods: ['GET'])]
-    public function apiMe(SerializerInterface $serializer): JsonResponse
+    #[Route('/api/me', name: 'api_me', methods: ['GET'])]
+    public function apiMe(): JsonResponse
     {
         $user = $this->getUser();
-        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user]);
 
-        $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
-//        $projectData = [];
-//        foreach ($projects as $project) {
-//            $projectData[] = [
-//                'id' => $project->getId(),
-//                'title' => $project->getTitle(),
-//                'description' => $project->getDescription(),
-//                'imageUrl' => $project->getImageUrl(),
-//                'createdAt' => $project->getCreatedAt()?->format('c'),
-//                'updatedAt' => $project->getUpdatedAt()?->format('c'),
-//            ];
-//        }
+        if (!$user instanceof UserInterface) {
+            return new JsonResponse(['error' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
+        }
 
-        # return $this->json($this->getUser());
-//        return new JsonResponse([
-//            'id' => $user->getId(),
-//            'email' => $user->getEmail(),
-//            'roles' => $user->getRoles(),
-//            'createdAt' => $user->getCreatedAt()?->format('c'),
-//            'projects' => $projectData, // Optional, or you can fill with IDs or names if needed
-//            'likes' => [],    // Same
-//            'userIdentifier' => method_exists($user, 'getUserIdentifier') ? $user->getUserIdentifier() : null,
-//        ]);
-        return new JsonResponse($projectsJson,JsonResponse::HTTP_OK, [], true);
+        // Gestion automatique des références circulaires
+        $context = [
+            'groups' => ['user:read', 'project:read'],
+            AbstractNormalizer::CIRCULAR_REFERENCE_HANDLER => function ($object) {
+                return $object->getId(); // lorsqu’un objet se répète, ne renvoie que son ID
+            },
+        ];
+
+        $json = $this->serializer->serialize($user, 'json', $context);
+
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
-
 }

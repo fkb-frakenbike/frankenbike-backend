@@ -16,7 +16,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name: "users")]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'project:read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -31,31 +31,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     private ?string $plainPassword = null;
 
-    // Map to the "role" column in your DB
-    #[Groups(['user:read', 'profile:read'])]
+    #[Groups(['user:read', 'profile:read', 'project:read'])]
     #[ORM\Column(name: "role", type: "string", length: 5, options: ["default" => "user"])]
-    private ?string $role;
+    private ?string $role = null;
 
-    // Add the created_at column from the database
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'project:read'])]
     #[ORM\Column(name: "created_at", type: "datetime_immutable", options: ['default' => "CURRENT_TIMESTAMP"])]
     private \DateTimeImmutable $createdAt;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user')]
     private Collection $projects;
 
-    /**
-     * @var Collection<int, Like>
-     */
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
     private Collection $likes;
 
     #[ORM\OneToOne(targetEntity: Profile::class, mappedBy: 'user')]
     private ?Profile $profile = null;
 
-    /**
-     * @var Collection<int, Comment>
-     */
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'user')]
     private Collection $comments;
 
