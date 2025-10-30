@@ -39,15 +39,20 @@ jobs:
 
       - name: Ensure .env on VM
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /opt/fkb-dev && [ -f .env ] || cat > .env <<'EOF'
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
+          set -euo pipefail
+          cd /opt/fkb-dev
+          if [ ! -f .env ]; then
+            cat > .env <<'EOF'
 COMPOSE_PROJECT_NAME=fkbdev
 DEV_HTTP_PORT=8788
 MYSQL_ROOT_PASSWORD=root
 MYSQL_DATABASE=fkb_db_dev
 MYSQL_USER=fkb_dev_user
 MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
-EOF"
+EOF
+          fi
+          VM
 
       - name: Rebuild stack
         run: |
