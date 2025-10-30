@@ -32,10 +32,20 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Install rsync on runner
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Ensure rsync on VM
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'command -v rsync >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y rsync)'
+
       - name: Rsync code to VM
         run: |
           rsync -az --delete \
             --exclude '.git' \
+            --exclude '.env.dev.local' \
+            --exclude 'config/jwt/*.pem' \
             --exclude 'var/cache/*' \
             --exclude 'var/log/*' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
