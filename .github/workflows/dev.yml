@@ -1,7 +1,13 @@
+name: Dev deploy
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
   deploy:
-    needs: ci
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -26,39 +32,22 @@
       - name: Rsync code to VM
         run: |
           rsync -az --delete --no-perms --omit-dir-times \
-            --exclude '.git' \
-            --exclude '.env' \
-            --exclude '.env.dev.local' \
+            --exclude '.git' --exclude '.env*' \
             --exclude 'config/jwt/*.pem' \
-            --exclude 'var/***' \
-            --exclude 'vendor/***' \
+            --exclude 'var/***' --exclude 'vendor/***' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
 
       - name: Ensure .env on VM
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /opt/fkb-dev &&
-            if [ ! -f .env ]; then
-              {
-                echo 'COMPOSE_PROJECT_NAME=fkbdev';
-                echo 'DEV_HTTP_PORT=8788';
-                echo 'MYSQL_ROOT_PASSWORD=root';
-                echo 'MYSQL_DATABASE=fkb_db_dev';
-                echo 'MYSQL_USER=fkb_dev_user';
-                echo 'MYSQL_PASSWORD=Str0ng_Dev_Pass_2025';
-              } > .env
-            fi"
-
-      - name: Ensure php-fpm override
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /opt/fkb-dev &&
-            {
-              echo 'services:';
-              echo '  php:';
-              echo '    command: [\"php-fpm\"]';
-              echo '    ports: []';
-            } > docker-compose.phpfpm.override.yml"
+            cd /opt/fkb-dev && [ -f .env ] || cat > .env <<'EOF'
+COMPOSE_PROJECT_NAME=fkbdev
+DEV_HTTP_PORT=8788
+MYSQL_ROOT_PASSWORD=root
+MYSQL_DATABASE=fkb_db_dev
+MYSQL_USER=fkb_dev_user
+MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
+EOF"
 
       - name: Rebuild stack
         run: |
