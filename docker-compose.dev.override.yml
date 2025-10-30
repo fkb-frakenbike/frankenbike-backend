@@ -1,5 +1,6 @@
 services:
   nginx:
+    image: nginx:1.25-alpine
     ports: ["8788:80"]
     volumes:
       - .:/var/www/html:ro
@@ -19,5 +20,6 @@ services:
       - db_data_dev:/var/lib/mysql
       - ./docker/mysql/conf.d:/etc/mysql/conf.d
       - ./sql:/docker-entrypoint-initdb.d
+
 volumes:
   db_data_dev:
