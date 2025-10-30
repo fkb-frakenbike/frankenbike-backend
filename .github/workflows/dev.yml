@@ -65,27 +65,34 @@ jobs:
 
       - name: Ensure .env on VM
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
-          set -euo pipefail
-          cd /opt/fkb-dev
-          [ -f .env ] || cat > .env <<'ENV'
-      COMPOSE_PROJECT_NAME=fkbdev
-      DEV_HTTP_PORT=8788
-      MYSQL_ROOT_PASSWORD=root
-      MYSQL_DATABASE=fkb_db_dev
-      MYSQL_USER=fkb_dev_user
-      MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
-      ENV
-         VM
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd /opt/fkb-dev && [ -f .env ] || printf '%s\n' \
+COMPOSE_PROJECT_NAME=fkbdev
+DEV_HTTP_PORT=8788
+MYSQL_ROOT_PASSWORD=root
+MYSQL_DATABASE=fkb_db_dev
+MYSQL_USER=fkb_dev_user
+MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
+> .env"
+
       - name: Ensure php-fpm override
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
           set -euo pipefail
           cd /opt/fkb-dev
           cat > docker-compose.phpfpm.override.yml <<'YAML'
-      services:
-        php:
-          command: ["php-fpm"]
-          ports: []
-      YAML
-          VM
+services: \
+'  php:' \
+'    command: [\"php-fpm\"]' \
+'    ports: []' \
+> docker-compose.phpfpm.override.yml"
+
+      - name: Rebuild stack
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'cd /opt/fkb-dev && sudo docker compose -f docker-compose.yml -f docker-compose.dev.override.yml -f docker-compose.phpfpm.override.yml up -d --build'
+
+      - name: Healthcheck
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'for i in {1..20}; do code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8788/api/ping); [ "$code" = "200" ] && echo OK && exit 0; sleep 3; done; echo FAIL; exit 1'
