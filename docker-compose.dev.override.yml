@@ -1,0 +1,23 @@
+services:
+  nginx:
+    ports: ["8788:80"]
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.dev.conf:/etc/nginx/conf.d/default.conf:ro
+
+  php:
+    volumes:
+      - .:/var/www/html:cached
+
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fkb_db_dev
+      MYSQL_USER: fkb_dev_user
+      MYSQL_PASSWORD: Str0ng_Dev_Pass_2025
+    volumes:
+      - db_data_dev:/var/lib/mysql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./sql:/docker-entrypoint-initdb.d
+volumes:
+  db_data_dev:
