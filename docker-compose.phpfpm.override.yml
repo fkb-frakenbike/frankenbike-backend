@@ -1,3 +1,5 @@
 services:
   php:
-    ports: ["8787:8000"]
+    # force back to php-fpm so nginx -> fastcgi_pass php:9000 works
+    command: ["php-fpm"]
+    ports: []   # not exposing 8000 anymore
