@@ -47,8 +47,8 @@ jobs:
             --exclude '.git' \
             --exclude '.env.dev.local' \
             --exclude 'config/jwt/*.pem' \
-            --exclude 'var/cache/*' \
-            --exclude 'var/log/*' \
+            --exclude 'var/***' \
+            --exclude 'vendor/***' \
             --exclude '.env.dev.local' \
             --exclude 'config/jwt/*.pem' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
@@ -63,3 +63,29 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             'for i in {1..20}; do code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8788/api/ping); [ "$code" = "200" ] && echo OK && exit 0; sleep 3; done; echo FAIL; exit 1'
 
+      - name: Ensure .env on VM
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
+          set -euo pipefail
+          cd /opt/fkb-dev
+          [ -f .env ] || cat > .env <<'ENV'
+      COMPOSE_PROJECT_NAME=fkbdev
+      DEV_HTTP_PORT=8788
+      MYSQL_ROOT_PASSWORD=root
+      MYSQL_DATABASE=fkb_db_dev
+      MYSQL_USER=fkb_dev_user
+      MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
+      ENV
+         VM
+      - name: Ensure php-fpm override
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
+          set -euo pipefail
+          cd /opt/fkb-dev
+          cat > docker-compose.phpfpm.override.yml <<'YAML'
+      services:
+        php:
+          command: ["php-fpm"]
+          ports: []
+      YAML
+          VM
