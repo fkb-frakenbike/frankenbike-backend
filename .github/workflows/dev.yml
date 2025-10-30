@@ -48,6 +48,8 @@ jobs:
             --exclude 'config/jwt/*.pem' \
             --exclude 'var/cache/*' \
             --exclude 'var/log/*' \
+            --exclude '.env.dev.local' \
+            --exclude 'config/jwt/*.pem' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
 
       - name: Rebuild stack
