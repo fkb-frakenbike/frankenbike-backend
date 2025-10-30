@@ -42,7 +42,7 @@ jobs:
 
       - name: Rsync code to VM
         run: |
-          rsync -az --delete \
+          rsync -az --delete --no-perms --omit-dir-times \
             --exclude '.env' \
             --exclude '.git' \
             --exclude '.env.dev.local' \
@@ -50,8 +50,23 @@ jobs:
             --exclude 'var/***' \
             --exclude 'vendor/***' \
             --exclude '.env.dev.local' \
-            --exclude 'config/jwt/*.pem' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
+
+
+      - name: Ensure .env on VM
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/fkb-dev &&
+            if [ ! -f .env ]; then
+              {
+                echo 'COMPOSE_PROJECT_NAME=fkbdev';
+                echo 'DEV_HTTP_PORT=8788';
+                echo 'MYSQL_ROOT_PASSWORD=root';
+                echo 'MYSQL_DATABASE=fkb_db_dev';
+                echo 'MYSQL_USER=fkb_dev_user';
+                echo 'MYSQL_PASSWORD=Str0ng_Dev_Pass_2025';
+              } > .env
+            fi"
 
       - name: Rebuild stack
         run: |
@@ -77,15 +92,14 @@ MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
 
       - name: Ensure php-fpm override
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
-          set -euo pipefail
-          cd /opt/fkb-dev
-          cat > docker-compose.phpfpm.override.yml <<'YAML'
-services: \
-'  php:' \
-'    command: [\"php-fpm\"]' \
-'    ports: []' \
-> docker-compose.phpfpm.override.yml"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/fkb-dev &&
+            {
+              echo 'services:';
+              echo '  php:';
+              echo '    command: [\"php-fpm\"]';
+              echo '    ports: []';
+            } > docker-compose.phpfpm.override.yml"
 
       - name: Rebuild stack
         run: |
