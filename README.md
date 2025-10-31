@@ -64,7 +64,7 @@ docker/              # PHP runtime Dockerfile
   - On success: Sets `AUTH_TOKEN_COOKIE` (HTTP-only, Secure, SameSite=Lax).
 - Protected routes: All `/api/**` except:
   - `/api/login`, `/api/ping`, `POST /api/users`, `/api/logout`
-- Cookie extraction configured in  [`lexik_jwt_authentication.yaml`](config/packages/lexik_jwt_authentication.yaml).
+- Cookie extraction configured in [`lexik_jwt_authentication.yaml`](config/packages/lexik_jwt_authentication.yaml).
 - Access control in [`security.yaml`](config/packages/security.yaml).
 - Roles derived from `User::getRole()` → `ROLE_<UPPER>`.
 
