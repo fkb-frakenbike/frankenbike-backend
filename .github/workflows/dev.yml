@@ -84,20 +84,17 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             'cd /opt/fkb-dev && sudo docker compose -f docker-compose.yml -f docker-compose.dev.override.yml -f docker-compose.phpfpm.override.yml up -d --build'
 
-      - name: Install composer deps inside container
+      - name: Install composer deps inside container (helper image)
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             set -e
             cd /opt/fkb-dev
-            # install composer once if missing
-            sudo docker compose exec -T php bash -lc "
-              command -v composer >/dev/null 2>&1 || {
-                php -r \"copy(\"\"https://getcomposer.org/installer\"\", \"\"composer-setup.php\"\"); \
-                php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
-                rm composer-setup.php;
-              }"
-            # install deps (will create vendor/)
-            sudo docker compose exec -T php composer install --no-interaction --prefer-dist --no-progress
+            # install PHP deps into /opt/fkb-dev/vendor on the host
+            sudo docker run --rm \
+              -v /opt/fkb-dev:/app \
+              -w /app \
+              composer:2 \
+              install --no-interaction --prefer-dist --no-progress
           '
 
       - name: Healthcheck
