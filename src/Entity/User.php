@@ -50,6 +50,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user')]
     private Collection $likes;
 
+    #[Groups(['user:read'])]
     #[ORM\OneToOne(targetEntity: Profile::class, mappedBy: 'user')]
     private ?Profile $profile = null;
 
