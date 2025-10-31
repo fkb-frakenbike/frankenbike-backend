@@ -15,13 +15,22 @@ class SubUserController extends UserController
     {}
 
     #[Route('/api/me', name: 'me', methods: ['GET'])]
-    public function apiMe(SerializerInterface $serializer): JsonResponse
-    {
-        $user = $serializer->normalize($this->getUser(), null, ['groups' => ['user:read']]);
-        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $user], ['createdAt' => 'DESC']);
-
-    $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:list']]);
-        return new JsonResponse($projectsJson, JsonResponse::HTTP_OK, [], true);
+public function apiMe(SerializerInterface $serializer): JsonResponse
+{
+    $currentUser = $this->getUser();
+    if (!$currentUser) {
+        return new JsonResponse(['error' => 'Authentication required'], JsonResponse::HTTP_UNAUTHORIZED);
     }
+
+    $userData = $serializer->normalize($currentUser, null, ['groups' => ['user:read']]);
+
+    $projects = $this->em->getRepository(Project::class)->findBy(['user' => $currentUser], ['createdAt' => 'DESC']);
+    $projectsJson = $serializer->serialize($projects, 'json', ['groups' => ['project:list']]);
+
+    return new JsonResponse([
+        'user' => $userData,
+        'projects' => json_decode($projectsJson),
+    ], JsonResponse::HTTP_OK);
+}
 
 }

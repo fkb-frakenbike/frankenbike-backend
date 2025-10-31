@@ -17,7 +17,7 @@ class Profile
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Groups(['profile:read', 'user:read'])]
+    #[Groups(['profile:read'])]
     #[ORM\OneToOne(targetEntity: User::class, inversedBy: 'profile')]
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", unique: true, nullable: false, onDelete: "CASCADE")]
     private ?User $user= null;
