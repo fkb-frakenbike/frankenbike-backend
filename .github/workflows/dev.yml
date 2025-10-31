@@ -1,13 +1,27 @@
-name: Dev deploy
+name: Dev CI/CD
 
 on:
   push:
     branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
 
 jobs:
-  deploy:
+  ci:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist --no-scripts
+      - run: composer audit || true
+
+  deploy:
+    needs: ci
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -37,22 +51,33 @@ jobs:
             --exclude 'var/***' --exclude 'vendor/***' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/fkb-dev/
 
-      - name: Ensure .env on VM
+      - name: Ensure .env on VM (no heredoc)
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'VM'
-          set -euo pipefail
-          cd /opt/fkb-dev
-          if [ ! -f .env ]; then
-            cat > .env <<'EOF'
-COMPOSE_PROJECT_NAME=fkbdev
-DEV_HTTP_PORT=8788
-MYSQL_ROOT_PASSWORD=root
-MYSQL_DATABASE=fkb_db_dev
-MYSQL_USER=fkb_dev_user
-MYSQL_PASSWORD=Str0ng_Dev_Pass_2025
-EOF
-          fi
-          VM
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/fkb-dev &&
+            if [ ! -f .env ]; then
+              printf '%s\n' \
+                'COMPOSE_PROJECT_NAME=fkbdev' \
+                'DEV_HTTP_PORT=8788' \
+                'MYSQL_ROOT_PASSWORD=root' \
+                'MYSQL_DATABASE=fkb_db_dev' \
+                'MYSQL_USER=fkb_dev_user' \
+                'MYSQL_PASSWORD=Str0ng_Dev_Pass_2025' \
+              > .env
+            fi
+          "
+
+      - name: Ensure php-fpm override (no heredoc)
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/fkb-dev &&
+            printf '%s\n' \
+              'services:' \
+              '  php:' \
+              '    command: [\"php-fpm\"]' \
+              '    ports: []' \
+            > docker-compose.phpfpm.override.yml
+          "
 
       - name: Rebuild stack
         run: |
