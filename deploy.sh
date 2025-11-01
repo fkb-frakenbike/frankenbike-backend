@@ -25,7 +25,6 @@ VENDOR_VOL="$(docker compose "${FILES[@]}" config | awk '/volumes:/ {invol=1; ne
 VAR_VOL_NAME="$(docker compose "${FILES[@]}" ps -a >/dev/null 2>&1 || true; echo "$(basename "$(pwd)")")_${VAR_VOL:-var_cache}"
 VENDOR_VOL_NAME="$(docker compose "${FILES[@]}" ps -a >/dev/null 2>&1 || true; echo "$(basename "$(pwd)")")_${VENDOR_VOL:-vendor_cache}"
 
-# If volumes don't exist yet, Compose will create them on 'up'; we can chown after 'up' as well.
 echo "[deploy] Pull/build images…"
 docker compose "${FILES[@]}" pull || true
 docker compose "${FILES[@]}" build --pull php
@@ -33,10 +32,24 @@ docker compose "${FILES[@]}" build --pull php
 echo "[deploy] Start/refresh containers…"
 docker compose "${FILES[@]}" up -d --remove-orphans php nginx
 
-# Ensure volumes are owned by www-data (uid 33) so Symfony can write cache/logs/vendor
-echo "[deploy] Fix volume ownership (uid:33)…"
-docker run --rm -v "${VAR_VOL_NAME}:/mnt"    busybox sh -lc 'chown -R 33:33 /mnt || true'
-docker run --rm -v "${VENDOR_VOL_NAME}:/mnt" busybox sh -lc 'chown -R 33:33 /mnt || true'
+# Detect the real uid/gid used by the PHP container (www-data inside the image)
+PHP_UID="$(docker exec -t fkb-php sh -lc 'id -u' | tr -d '\r\n')"
+PHP_GID="$(docker exec -t fkb-php sh -lc 'id -g' | tr -d '\r\n')"
+echo "[deploy] Fix volume ownership (container uid:gid = ${PHP_UID}:${PHP_GID})…"
+
+# Chown named volumes from the host using BusyBox to the *actual* uid/gid
+docker run --rm -v "${VAR_VOL_NAME}:/mnt"    busybox sh -lc "chown -R ${PHP_UID}:${PHP_GID} /mnt || true"
+docker run --rm -v "${VENDOR_VOL_NAME}:/mnt" busybox sh -lc "chown -R ${PHP_UID}:${PHP_GID} /mnt || true"
+
+# Ensure directories exist and have sane perms from *inside* the container
+docker exec -u root -t fkb-php sh -lc " \
+  set -e; \
+  mkdir -p /var/www/html/var/cache /var/www/html/var/log /var/www/html/vendor; \
+  chown -R ${PHP_UID}:${PHP_GID} /var/www/html/var /var/www/html/vendor; \
+  find /var/www/html/var -type d -exec chmod 775 {} \; ; \
+  find /var/www/html/var -type f -exec chmod 664 {} \; ; \
+  chmod g+s /var/www/html/var/cache \
+"
 
 # Install vendors into the vendor named volume using the Composer image
 # Code is :ro, vendor volume is writable, perfect for prod
@@ -53,8 +66,7 @@ echo "[deploy] Symfony cache warmup…"
 docker exec -t fkb-php php /var/www/html/bin/console cache:clear --env=prod
 docker exec -t fkb-php php /var/www/html/bin/console cache:warmup --env=prod
 
-# Optional DB backup (kept from your original script, but note: mysqldump via PHP container
-# only works if the php image has client tools + DB_* envs exported; otherwise skip or run from DB VM)
+# Optional DB backup (kept from your original script; requires client tools + DB_* envs)
 if [ "${BACKUP:-0}" = "1" ]; then
   echo "[deploy] DB backup…"
   mkdir -p "$APP_DIR/backups"
