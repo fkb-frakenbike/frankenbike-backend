@@ -11,7 +11,7 @@ Provides user accounts, JWT (cookie-based) authentication, projects, components,
 - JWT (Lexik JWT Authentication Bundle) – cookie transport
 - API Platform (installed, partially used)
 - Nelmio CORS
-- Monolog
+- Monolog 
 - Docker (runtime + MySQL)
 - PHPUnit / BrowserKit / Foundry (test scaffolding)
 
