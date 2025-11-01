@@ -2,3 +2,4 @@
 *.sh eol=lf
 *.yml eol=lf
 *.yaml eol=lf
+*.sh text eol=lf
