@@ -6,10 +6,9 @@ services:
     container_name: fkb-php
     restart: always
     working_dir: /var/www/html
-    env_file:
-      - .env.prod.local
     volumes:
       - var_cache:/var/www/html/var
+      - vendor_cache:/var/www/html/vendor
     networks: [appnet]
 
   nginx:
@@ -28,6 +27,7 @@ services:
 
 volumes:
   var_cache:
+  vendor_cache:
 
 networks:
   appnet:

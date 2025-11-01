@@ -5,3 +5,8 @@ services:
     volumes:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/conf.d/ssl.conf:/etc/nginx/conf.d/ssl-self.conf:ro
+
+  php:
+    volumes:
+      - /opt/fkb-app:/var/www/html:ro   # code + compiled env visible
+      - var_cache:/var/www/html/var     # writable var
