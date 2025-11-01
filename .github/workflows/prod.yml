@@ -2,23 +2,23 @@ name: Deploy PROD (App VM)
 
 on:
   push:
-    branches: [ "main" ]   # adjust if prod branch is named differently
+    branches: [ "main" ]
 
 jobs:
   deploy:
     name: Build & Deploy on PROD VM
-    runs-on: [ self-hosted, Linux, X64 ]  # labels of your VM runner
+    runs-on: [ self-hosted, Linux, X64 ]
 
     env:
       APP_DIR: /opt/fkb-app
-      RUN_MIGRATIONS: "1"   # set "0" to skip DB migrations
-      BACKUP: "0"           # set "1" to enable DB backup before migration
+      RUN_MIGRATIONS: "0"  # set to "1" when DB is ready
+      BACKUP: "0"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Sync code to $APP_DIR (exclude secrets)
+      - name: Sync code to $APP_DIR (exclude secrets & protect compiled env)
         run: |
           rsync -a --delete \
             --exclude='.git' \
@@ -33,8 +33,8 @@ jobs:
       - name: Verify compose files
         run: |
           ls -la "$APP_DIR"
-          echo "--- docker-compose files ---"
-          [ -f "$APP_DIR/docker-compose.prod.yml" ] || (echo "❌ Missing prod compose"; exit 1)
+          [ -f "$APP_DIR/docker-compose.prod.yml" ] || (echo "❌ Missing docker-compose.prod.yml"; exit 1)
+          [ -f "$APP_DIR/docker-compose.prod.override.yml" ] || (echo "❌ Missing docker-compose.prod.override.yml"; exit 1)
 
       - name: Deploy
         run: |
