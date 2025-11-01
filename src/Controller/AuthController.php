@@ -57,13 +57,19 @@ class AuthController extends AbstractController
 
         $response = new JsonResponse(['message' => 'Connected'], Response::HTTP_OK);
 
+        $isProd = $_ENV['APP_ENV'] === 'prod';
+
+
+        $sameSite = 'Lax';
+        $secure   = $isProd ? true : false;
+
 
         if($rememberMe) {
             $expiresAt = time()+(60*60*24*30);
             $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
                 ->withHttpOnly(true)
-                ->withSecure(true)
-                ->withSameSite("Lax")
+                ->withSecure($secure)
+                ->withSameSite("$sameSite")
                 ->withPath('/')
                 ->withExpires($expiresAt);
         } else {
