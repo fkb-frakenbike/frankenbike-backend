@@ -1,0 +1,40 @@
+name: Deploy PROD (App VM)
+
+on:
+  push:
+    branches: [ "main" ]   # adjust if prod branch is named differently
+
+jobs:
+  deploy:
+    name: Build & Deploy on PROD VM
+    runs-on: [ self-hosted, Linux, X64 ]  # labels of your VM runner
+
+    env:
+      APP_DIR: /opt/fkb-app
+      RUN_MIGRATIONS: "1"   # set "0" to skip DB migrations
+      BACKUP: "0"           # set "1" to enable DB backup before migration
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync code to $APP_DIR (exclude secrets)
+        run: |
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='backups/' \
+            --exclude='releases/' \
+            --exclude='.env.prod.local' \
+            --exclude='jwt/*' \
+            ./ "$APP_DIR"/
+
+      - name: Verify compose files
+        run: |
+          ls -la "$APP_DIR"
+          echo "--- docker-compose files ---"
+          [ -f "$APP_DIR/docker-compose.prod.yml" ] || (echo "❌ Missing prod compose"; exit 1)
+
+      - name: Deploy
+        run: |
+          chmod +x "$APP_DIR/deploy.sh"
+          RUN_MIGRATIONS="${RUN_MIGRATIONS}" BACKUP="${BACKUP}" bash "$APP_DIR/deploy.sh"
