@@ -25,6 +25,8 @@ jobs:
             --exclude='backups/' \
             --exclude='releases/' \
             --exclude='.env.prod.local' \
+            --exclude='.env.local.php' \
+            --filter='protect .env.local.php' \
             --exclude='jwt/*' \
             ./ "$APP_DIR"/
 
