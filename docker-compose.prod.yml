@@ -27,7 +27,11 @@ services:
 
 volumes:
   var_cache:
+    external: true
+    name: fkb-app_var_cache
   vendor_cache:
+    external: true
+    name: fkb-app_vendor_cache
 
 networks:
   appnet:
