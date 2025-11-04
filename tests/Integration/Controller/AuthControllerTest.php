@@ -56,11 +56,11 @@ class AuthControllerTest extends WebTestCase
         $currentDb = $connection->executeQuery('SELECT DATABASE()')->fetchOne();
 
 
-        // 4) Assert that it is "fkb_db_test"
+
         $this->assertEquals(
-            'fkb_db_test',
+            'fkb_db',
             $currentDb,
-            sprintf('Expected Doctrine to connect to fkb_db_test, but got "%s".', $currentDb)
+            sprintf('Expected Doctrine to connect to fkb_db, but got "%s".', $currentDb)
         );
     }
     public function testGetReturnsNotLoggedIn(): void

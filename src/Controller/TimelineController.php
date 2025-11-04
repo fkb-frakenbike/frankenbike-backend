@@ -3,61 +3,76 @@
 namespace App\Controller;
 
 use App\Entity\Project;
+use App\Service\ComponentPhotoStorage;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class TimelineController extends AbstractController
 {
-    private EntityManagerInterface $em;
-
-    public function __construct(EntityManagerInterface $em)
-    {
-        $this->em = $em;
-    }
-
     #[Route('/api/timelines/{userId}', name: 'user_timeline', methods: ['GET'])]
-    public function userTimeline(int $userId): JsonResponse
-    {
+    public function userTimeline(
+        int $userId,
+        EntityManagerInterface $em,
+        SerializerInterface $serializer,
+        ComponentPhotoStorage $componentPhotoStorage
+    ): JsonResponse {
+        // 1) Authorization
         $currentUser = $this->getUser();
-
-        // Vérification utilisateur connecté
         if (!$currentUser instanceof UserInterface) {
-            return new JsonResponse(['error' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Vérification que l'utilisateur demandant est bien le même
-        if ($currentUser->getId() !== $userId) {
-            return new JsonResponse(['error' => 'Forbidden'], JsonResponse::HTTP_FORBIDDEN);
+        if ($currentUser->getId() !== $userId /* && !$this->isGranted('ROLE_ADMIN') */) {
+            return new JsonResponse(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
-        // Récupération des projets du user
-        $projects = $this->em->getRepository(Project::class)->findBy(['user' => $userId]);
+        // 2) Fetch user projects
+        $projects = $em->getRepository(Project::class)->findBy(['user' => $userId]);
 
+        // 3) Build data manually to match frontend's expected shape
         $timelineData = [];
 
         foreach ($projects as $project) {
             $componentsArr = [];
+
             foreach ($project->getComponents() as $component) {
+                $photoKey = $component->getPhotoS3Key();
+                $photoUrl = $photoKey !== ''
+                    ? $componentPhotoStorage->publicUrl($photoKey)
+                    : null;
+
                 $componentsArr[] = [
-                    'id' => $component->getId(),
-                    'name' => $component->getName(),
+                    'id'          => $component->getId(),
+                    'name'        => $component->getName(),
                     'description' => $component->getDescription(),
-                    'category' => $component->getCategory()->value,
-                    'origin' => $component->getOrigin()->value,
-                    // Ajoute ici d'autres champs utiles pour ton frontend, ex: image, dates...
+                    'category'    => $component->getCategory()->value,
+                    'origin'      => $component->getOrigin()->value,
+                    'img'         => $photoUrl,
+                    // optional fields for future improvements:
+                    // 'likes'    => $project->getLikes()->count(),
+                    // 'comments' => $project->getComments()->count(),
+                    // 'userImg'  => $project->getUser()->getProfile()?->getPhotoUrl(),
+                    // 'userName' => $project->getUser()->getProfile()?->getNickname()
+                    //             ?? $project->getUser()->getEmail(),
+                    // 'nature'   => ...
                 ];
             }
 
             $timelineData[] = [
-                'projectId' => $project->getId(),
+                'projectId'   => $project->getId(),
                 'projectName' => $project->getTitle(),
-                'components' => $componentsArr,
+                'components'  => $componentsArr,
             ];
         }
 
-        return new JsonResponse($timelineData, JsonResponse::HTTP_OK);
+        // 4) Serialize (no groups because we serialize an array, not entities)
+        $json = $serializer->serialize($timelineData, 'json');
+
+        return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 }
