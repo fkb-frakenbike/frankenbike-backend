@@ -76,7 +76,7 @@ class AuthController extends AbstractController
             $expiresAt = time()+(60*60);
             $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
                 ->withHttpOnly(true)
-                ->withSecure(true)
+                ->withSecure($secure)
                 ->withSameSite("Lax")
                 ->withPath('/')
                 ->withExpires($expiresAt);
