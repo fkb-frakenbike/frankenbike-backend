@@ -32,7 +32,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-
+#You cannot “fix” an old run; the workflow used the file that existed at that time.
     steps:
       - uses: actions/checkout@v4
 
