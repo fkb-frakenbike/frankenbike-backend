@@ -12,7 +12,7 @@ jobs:
 
     env:
       APP_ENV: test
-      DATABASE_URL: mysql://root:root@127.0.0.1:3306/fkb_db_test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/fkb_db
       APP_SECRET: ${{ secrets.APP_SECRET }}
       CORS_ALLOW_ORIGIN: ${{ secrets.CORS_ALLOW_ORIGIN }}
       JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
@@ -24,7 +24,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: fkb_db_test
+          MYSQL_DATABASE: fkb_db
         ports:
           - 3306:3306
         options: >-
@@ -41,7 +41,7 @@ jobs:
           cat << EOF > .env
           APP_ENV=test
           APP_SECRET=${{ secrets.APP_SECRET }}
-          DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db_test"
+          DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db"
           CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}
           JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
           JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
