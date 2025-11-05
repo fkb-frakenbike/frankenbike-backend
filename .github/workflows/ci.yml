@@ -10,6 +10,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    # These env vars are visible to *all* steps (phpunit, bin/console, etc.)
     env:
       APP_ENV: test
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/fkb_db
@@ -36,45 +37,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ⬇️ this is the bit we removed earlier and now need back
+      # recreate the .env file for Symfony in CI
       - name: Create .env file for Symfony
         run: |
           cat << EOF > .env
-  APP_ENV=test
-  APP_SECRET=${{ secrets.APP_SECRET }}
-  DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db"
-  CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}
-  JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
-  JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
-  JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}
-  EOF
+          APP_ENV=test
+          APP_SECRET=${{ secrets.APP_SECRET }}
+          DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db"
+          CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}
+          JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+          JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+          JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}
+          EOF
 
-- name: Set up PHP
-  uses: shivammathur/setup-php@v2
-  with:
-    php-version: "8.3"
-    extensions: mbstring, intl, pdo_mysql
-    coverage: xdebug
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_mysql
+          coverage: xdebug
 
-- name: Wait for MySQL
-  run: |
-    until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do
-      sleep 2
-    done
+      - name: Wait for MySQL
+        run: |
+          until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do
+            sleep 2
+          done
 
-- name: Install Composer dependencies
-  run: composer install --prefer-dist --no-interaction --no-scripts
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-scripts
 
-- name: Generate JWT keypair
-  run: php bin/console lexik:jwt:generate-keypair --overwrite -n
+      - name: Generate JWT keypair
+        run: php bin/console lexik:jwt:generate-keypair --overwrite -n
 
-- name: Create test database (raw SQL)
-  run: |
-    mysql -h 127.0.0.1 -u root -proot -e \
-      "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+      - name: Create test database (raw SQL)
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e \
+            "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-- name: Update schema
-  run: php bin/console doctrine:schema:update --env=test --force
+      - name: Update schema
+        run: php bin/console doctrine:schema:update --env=test --force
 
-- name: Run PHPUnit
-  run: ./vendor/bin/phpunit --coverage-text
+      - name: Run PHPUnit
+        run: ./vendor/bin/phpunit --coverage-text
