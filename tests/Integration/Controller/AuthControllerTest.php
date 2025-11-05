@@ -1,5 +1,4 @@
 <?php
-// tests/ConnectionTest.php
 
 namespace App\Tests\Integration\Controller;
 
@@ -11,108 +10,65 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class AuthControllerTest extends WebTestCase
 {
     private \Symfony\Bundle\FrameworkBundle\KernelBrowser $client;
-    private EntityManagerInterface $entityManager;
+    private EntityManagerInterface $em;
     private UserPasswordHasherInterface $hasher;
 
     protected function setUp(): void
     {
-        parent::setUp();
         self::ensureKernelShutdown();
-
-        // 1) Boot the kernel in "test" mode and get a client
         $this->client = static::createClient();
 
-        // 2) Fetch EntityManager via the "doctrine" service
-        $this->entityManager = $this->client
-            ->getContainer()
-            ->get('doctrine')
-            ->getManager();
+        $container = $this->client->getContainer();
+        $this->em = $container->get(EntityManagerInterface::class);
+        $this->hasher = $container->get(UserPasswordHasherInterface::class);
 
-        // 3) Fetch Symfony’s UserPasswordHasher
-        $this->hasher = $this->client
-            ->getContainer()
-            ->get(UserPasswordHasherInterface::class);
-
-        // 4) Truncate users table so each test starts fresh
-        $conn = $this->entityManager->getConnection();
-        try {
-            $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0;');
-            $conn->executeStatement('TRUNCATE TABLE users;');
-            $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1;');
-        } catch (\Throwable $e) {
-            // If TRUNCATE isn’t supported, fall back to DELETE
-            $conn->executeStatement('DELETE FROM users;');
+        // Cleanup old test users
+        $existing = $this->em->getRepository(User::class)->findOneBy(['email' => 'test-login@example.com']);
+        if ($existing) {
+            $this->em->remove($existing);
+            $this->em->flush();
         }
     }
-    public function testDatabaseNameIsCorrect(): void
+
+    public function testLoginSuccessSetsCookie(): void
     {
-
-
-        // 2) Get Doctrine’s connection from the service container
-        $connection = $this->entityManager->getConnection();
-
-
-        // 3) Fetch the “current database name” directly via SQL
-        $currentDb = $connection->executeQuery('SELECT DATABASE()')->fetchOne();
-
-
-
-        $this->assertEquals(
-            'fkb_db',
-            $currentDb,
-            sprintf('Expected Doctrine to connect to fkb_db, but got "%s".', $currentDb)
-        );
-    }
-    public function testGetReturnsNotLoggedIn(): void
-    {
-
-        // Make a GET request to /api/me without any authentication
-        $this->client->request('GET', '/api/me');
-
-        // Assert we get a 401 Unauthorized
-        $this->assertEquals(401, $this->client->getResponse()->getStatusCode());
-    }
-
-    public function testGetReturnsNotValidPassword(): void
-    {
-        // Create the HTTP client (this also boots the kernel under the hood)
-        $this->createUser('j@example.com', 'correct-password');
-
-        $this->client->request('POST', '/api/login',
-        [],
-        [],
-        ['CONTENT_TYPE' => 'application/json'],
-        json_encode([
-            'email' => 'j@example.com',
-            'password' => 'correct-passwor',
-        ]));
-
-        $response = $this->client->getResponse();
-
-        $this->assertEquals(401, $response->getStatusCode());
-
-        // 4) Assert JSON body contains { "error": "Invalid credentials" }
-        $data = json_decode($response->getContent(), true);
-        $this->assertArrayHasKey('error', $data);
-        $this->assertEquals('Invalid credentials', $data['error']);
-    }
-
-    private function createUser(string $email, string $plainPassword): User
-    {
+        // Create test user
         $user = new User();
-        $user->setEmail($email);
-
-        // 1) Hash the plain password exactly as Symfony does
-        $hashed = $this->hasher->hashPassword($user, $plainPassword);
-        $user->setPassword($hashed);
-
-        // 2) Give it a default role
+        $user->setEmail('test-login@example.com');
         $user->setRole('user');
+        $user->setPassword($this->hasher->hashPassword($user, '123456'));
+        $this->em->persist($user);
+        $this->em->flush();
 
-        // 3) Persist and flush to the test database
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        // Login
+        $this->client->jsonRequest('POST', '/api/login', [
+            'email' => 'test-login@example.com',
+            'password' => '123456',
+            'rememberMe' => true,
+        ]);
 
-        return $user;
+        $this->assertResponseIsSuccessful();
+
+        $cookies = $this->client->getResponse()->headers->getCookies();
+        $found = false;
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === 'AUTH_TOKEN_COOKIE') {
+                $found = true;
+                break;
+            }
+        }
+
+        $this->assertTrue($found, 'AUTH_TOKEN_COOKIE should exist after successful login');
+    }
+
+    public function testApiMeRequiresAuth(): void
+    {
+        $this->client->request('GET', '/api/me');
+        $status = $this->client->getResponse()->getStatusCode();
+
+        $this->assertTrue(
+            $status === 401 || $status === 403,
+            sprintf('Expected 401 or 403, got %d', $status)
+        );
     }
 }

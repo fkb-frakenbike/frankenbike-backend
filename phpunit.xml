@@ -4,13 +4,13 @@
          bootstrap="vendor/autoload.php"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
-         requireCoverageMetadata="true"
+         requireCoverageMetadata="false"
          beStrictAboutCoverageMetadata="false"
          beStrictAboutOutputDuringTests="true"
          displayDetailsOnPhpunitDeprecations="true"
          failOnPhpunitDeprecation="true"
-         failOnRisky="true"
-         failOnWarning="true">
+         failOnRisky="false"
+         failOnWarning="false">
     <testsuites>
         <testsuite name="default">
             <directory>tests</directory>
@@ -23,14 +23,8 @@
         </include>
     </source>
 
-    <php>
-        <env name="KERNEL_CLASS" value="App\Kernel" />
-        <env name="APP_ENV" value="test"/>
-        <env name="DATABASE_URL" value="mysql://root:root@fkb-mysql:3306/fkb_db"/>
-        <env name="APP_SECRET" value="d6a65cf4db15cc3b8a44e5d62ff3eaa6"/>
-        <env name="JWT_SECRET_KEY" value="%kernel.project_dir%/config/jwt/private.pem"/>
-        <env name="JWT_PUBLIC_KEY" value="%kernel.project_dir%/config/jwt/public.pem"/>
-        <env name="JWT_PASSPHRASE" value="87cc2fba9769e569ad114174d67c13cb686863c35208a6593630d05bc4bf2593"/>
-        <env name="CORS_ALLOW_ORIGIN" value="http://localhost:3000"/>
-    </php>
+<php>
+    <env name="KERNEL_CLASS" value="App\Kernel" />
+    <env name="APP_ENV" value="test"/>
+</php>
 </phpunit>

@@ -10,8 +10,6 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
-    env:
-      DB_HOST: 127.0.0.1
     services:
       fkb-mysql:
         image: mysql:8.0
@@ -33,17 +31,17 @@ jobs:
         run: |
           echo "APP_ENV=test" >> .env
           echo "APP_SECRET=${{ secrets.APP_SECRET }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo 'DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db"' >> .env
           echo "CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}" >> .env
-          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
-          echo "JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }}" >> .env
+          echo 'JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem' >> .env
+          echo 'JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem' >> .env
           echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" >> .env
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: mbstring, intl, pdo_mysql, xdebug
+          extensions: mbstring, intl, pdo_mysql
           coverage: xdebug
 
       - name: Wait for MySQL
@@ -54,10 +52,14 @@ jobs:
 
       - name: Create test database (raw SQL)
         run: |
-          mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          mysql -h 127.0.0.1 -u root -proot -e \
+            "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction
+
+      - name: Generate JWT keypair
+        run: php bin/console lexik:jwt:generate-keypair --overwrite -n
 
       - name: Update schema
         run: php bin/console doctrine:schema:update --env=test --force
