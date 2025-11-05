@@ -10,8 +10,18 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    # These env vars are visible to *all* steps (phpunit, bin/console, etc.)
+    env:
+      APP_ENV: test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/fkb_db
+      APP_SECRET: ${{ secrets.APP_SECRET }}
+      CORS_ALLOW_ORIGIN: ${{ secrets.CORS_ALLOW_ORIGIN }}
+      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
+      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
+      JWT_PASSPHRASE: ${{ secrets.JWT_PASSPHRASE }}
+
     services:
-      fkb-mysql:
+      mysql:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
@@ -27,16 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create .env file
-        run: |
-          echo "APP_ENV=test" >> .env
-          echo "APP_SECRET=${{ secrets.APP_SECRET }}" >> .env
-          echo 'DATABASE_URL="mysql://root:root@127.0.0.1:3306/fkb_db"' >> .env
-          echo "CORS_ALLOW_ORIGIN=${{ secrets.CORS_ALLOW_ORIGIN }}" >> .env
-          echo 'JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem' >> .env
-          echo 'JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem' >> .env
-          echo "JWT_PASSPHRASE=${{ secrets.JWT_PASSPHRASE }}" >> .env
-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -50,16 +50,16 @@ jobs:
             sleep 2
           done
 
-      - name: Create test database (raw SQL)
-        run: |
-          mysql -h 127.0.0.1 -u root -proot -e \
-            "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction
 
       - name: Generate JWT keypair
         run: php bin/console lexik:jwt:generate-keypair --overwrite -n
+
+      - name: Create test database (raw SQL)
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e \
+            "CREATE DATABASE IF NOT EXISTS fkb_db_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
       - name: Update schema
         run: php bin/console doctrine:schema:update --env=test --force
