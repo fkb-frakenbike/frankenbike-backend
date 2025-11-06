@@ -11,7 +11,7 @@ jobs:
 
     env:
       APP_DIR: /opt/fkb-app
-      RUN_MIGRATIONS: "0"  # set to "1" when DB is ready
+      RUN_MIGRATIONS: "0"
       BACKUP: "0"
 
     steps:
@@ -29,9 +29,7 @@ jobs:
             --exclude='.env.local.php' \
             --filter='protect .env.local.php' \
             --filter='protect config/jwt/' \
-            --filter='protect nginx/default.conf' \
             --filter='protect nginx/ssl/' \
-            --filter='protect nginx/conf.d/ssl.conf' \
             ./ "$APP_DIR"/
 
       - name: Verify compose files
