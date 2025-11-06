@@ -27,7 +27,10 @@ jobs:
             --exclude='.env.prod.local' \
             --exclude='.env.local.php' \
             --filter='protect .env.local.php' \
-            --exclude='jwt/*' \
+            --filter='protect config/jwt/' \
+            --filter='protect nginx/default.conf' \
+            --filter='protect nginx/ssl/' \
+            --filter='protect nginx/conf.d/ssl.conf' \
             ./ "$APP_DIR"/
 
       - name: Verify compose files
