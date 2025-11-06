@@ -59,7 +59,7 @@ class TimelineController extends AbstractController
                     // 'userImg'  => $project->getUser()->getProfile()?->getPhotoUrl(),
                     // 'userName' => $project->getUser()->getProfile()?->getNickname()
                     //             ?? $project->getUser()->getEmail(),
-                    // 'nature'   => ...
+                    // 'nature'   => ..
                 ];
             }
 
