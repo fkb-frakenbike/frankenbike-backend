@@ -11,7 +11,7 @@ jobs:
 
     env:
       APP_DIR: /opt/fkb-app
-      RUN_MIGRATIONS: "0"
+      RUN_MIGRATIONS: "0"  # set to "1" when DB is ready
       BACKUP: "0"
 
     steps:
