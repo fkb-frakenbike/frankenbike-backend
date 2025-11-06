@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Sync code to $APP_DIR (exclude secrets & protect compiled env)
+      - name: Sync code to $APP_DIR (exclude secrets && protect compiled env)
         run: |
           rsync -a --delete \
             --no-owner --no-group --no-perms \
