@@ -34,7 +34,7 @@ class TimelineController extends AbstractController
         // 2) Fetch user projects
         $projects = $em->getRepository(Project::class)->findBy(['user' => $userId]);
 
-        // 3) Build data manually to match frontend's expected shape
+        // 3) Build data manually to match frontend`s expected shape
         $timelineData = [];
 
         foreach ($projects as $project) {
