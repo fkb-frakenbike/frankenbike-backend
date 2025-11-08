@@ -43,6 +43,10 @@ class Component
     private \DateTimeImmutable  $createdAt;
 
     #[Groups(['component:read', 'project:read'])]
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(name: "photo_s3_key", type: "string", length: 512, options: ['default' => ''])]
     private string $photoS3Key = '';
 
@@ -152,5 +156,15 @@ class Component
     {
         $this->photoSize = $size;
         return $this;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
     }
 }

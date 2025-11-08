@@ -132,14 +132,14 @@ class ComponentController extends AbstractController
     {
         // 1. fetch project, check ownership
         $project = $this->em->getRepository(Project::class)->find($projectId);
-        $user = $this->getUser();
-        if(!$user) {
-            $this->logger->info("User not logged in");
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'User not authenticated'
-            ], JsonResponse::HTTP_UNAUTHORIZED);
-        }
+        // $user = $this->getUser();
+        // if(!$user) {
+        //     $this->logger->info("User not logged in");
+        //     return new JsonResponse([
+        //         'status' => 'error',
+        //         'message' => 'User not authenticated'
+        //     ], JsonResponse::HTTP_UNAUTHORIZED);
+        // }
         if (!$project) {
             return new JsonResponse([
                 'status' => 'error',
@@ -147,12 +147,12 @@ class ComponentController extends AbstractController
             ], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        if($project->getUser()->getId()!== $user->getId()) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Authentication required'
-            ], JsonResponse::HTTP_UNAUTHORIZED);
-        }
+        // if($project->getUser()->getId()!== $user->getId()) {
+        //     return new JsonResponse([
+        //         'status' => 'error',
+        //         'message' => 'Authentication required'
+        //     ], JsonResponse::HTTP_UNAUTHORIZED);
+        // }
 
         // 2. fetch components by project_id
         $components = $project->getComponents();

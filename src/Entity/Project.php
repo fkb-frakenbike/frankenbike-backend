@@ -54,7 +54,7 @@ class Project
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $comments;
 
-    #[Groups(['project:read'])]
+    #[Groups(['project:read', 'project:list'])]
     #[ORM\OneToMany(targetEntity: Component::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
     private Collection $components;
 
