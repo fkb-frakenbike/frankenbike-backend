@@ -23,17 +23,19 @@ COPY . .
 RUN composer dump-autoload --no-dev --classmap-authoritative
 
 # ---- Runtime stage
-FROM php:8.3-fpm AS runtime
+FROM build AS runtime
+
+# keep same user remap
 RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
+
+# put app under /var/www/html (what nginx expects)
 WORKDIR /var/www/html
+RUN cp -R /app/. /var/www/html/
 
-COPY --chown=www-data:www-data --from=build /app ./
-
-# same entrypoint you already have
+# entrypoint + opcache as before
 COPY docker/php/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Opcache in prod
 RUN { \
   echo 'opcache.enable=1'; \
   echo 'opcache.enable_cli=0'; \
