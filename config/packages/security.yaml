@@ -67,6 +67,8 @@ security:
         - { path: ^/api/login$,  roles: PUBLIC_ACCESS }
         - { path: ^/api/ping,  roles: PUBLIC_ACCESS }
         - { path: ^/api/users$,  roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/api/users/\d+/projects$,  roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/projects/\d+/components$,  roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
 
         # Every other /api/* call needs a valid JWT
