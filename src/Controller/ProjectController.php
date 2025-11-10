@@ -122,7 +122,7 @@ class ProjectController extends AbstractController
         $total = $projectRepo->count([]);
 
 
-        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read', 'user:read']]);
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read', 'user:read', 'profile:read']]);
 
         return new JsonResponse([
         'data' => json_decode($jsonProjects),
@@ -167,7 +167,7 @@ class ProjectController extends AbstractController
 //            'createdAt' => $project->getCreatedAt()->format('Y-m-d H:i:s'),
 //            // etc.
 //        ];
-        $jsonProject = $this->serializer->serialize($project, 'json', ['groups' => ['project:read']]);
+        $jsonProject = $this->serializer->serialize($project, 'json', ['groups' => ['project:read', 'user:read', 'profile:read']]);
 
         return new JsonResponse($jsonProject, Response::HTTP_OK, [], true);
     }
@@ -345,7 +345,7 @@ class ProjectController extends AbstractController
         $projects = $projectRepo->findBy($criteria, ['createdAt' => 'DESC'], $limit, $offset);
         $total = $projectRepo->count($criteria);
 
-        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read']]);
+        $jsonProjects = $this->serializer->serialize($projects, 'json', ['groups' => ['project:read', 'user:read', 'profile:read']]);
 
         return new JsonResponse([
             'data' => json_decode($jsonProjects),
