@@ -8,8 +8,4 @@ services:
 
   php:
     volumes:
-      # 1) Bind the code read-only
       - /opt/fkb-app:/var/www/html
-      # 2) Then mount writable named volumes UNDER the bind (these must come after)
-      - var_cache:/var/www/html/var
-      - vendor_cache:/var/www/html/vendor
