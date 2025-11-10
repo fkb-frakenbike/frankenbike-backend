@@ -57,31 +57,20 @@ class AuthController extends AbstractController
 
         $response = new JsonResponse(['message' => 'Connected'], Response::HTTP_OK);
 
-        $isProd = $_ENV['APP_ENV'] === 'prod';
+        $isProd   = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
+        // 👉 For cross-site SPA → API, we need SameSite=None; Secure in prod
+        $sameSite = $isProd ? 'none' : 'lax';
+        $secure   = $isProd;
 
+        $ttl       = $rememberMe ? 60 * 60 * 24 * 30 : 60 * 60; // 30d vs 1h
+        $expiresAt = time() + $ttl;
 
-        $sameSite = 'Lax';
-        $secure   = $isProd ? true : false;
-
-
-        if($rememberMe) {
-            $expiresAt = time()+(60*60*24*30);
-            $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
-                ->withHttpOnly(true)
-                ->withSecure($secure)
-                ->withSameSite("$sameSite")
-                ->withPath('/')
-                ->withExpires($expiresAt);
-        } else {
-            $expiresAt = time()+(60*60);
-            $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
-                ->withHttpOnly(true)
-                ->withSecure($secure)
-                ->withSameSite("Lax")
-                ->withPath('/')
-                ->withExpires($expiresAt);
-        }
-
+        $cookie = Cookie::create('AUTH_TOKEN_COOKIE', $jwt)
+            ->withHttpOnly(true)
+            ->withSecure($secure)
+            ->withSameSite($sameSite)
+            ->withPath('/')
+            ->withExpires($expiresAt);
 
         $response->headers->setCookie($cookie);
         return $response;
@@ -90,10 +79,14 @@ class AuthController extends AbstractController
     #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
+        $isProd   = ($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'dev') === 'prod';
+        $sameSite = $isProd ? 'none' : 'lax';
+        $secure   = $isProd;
+
         $expired = Cookie::create('AUTH_TOKEN_COOKIE', '')
             ->withHttpOnly(true)
-            ->withSecure(true)  // keep settings consistent
-            ->withSameSite('Lax')
+            ->withSecure($secure)  // keep settings consistent
+            ->withSameSite($sameSite)
             ->withPath('/')
             ->withExpires(1)    // 1 second after 1970 => removed by browser
         ;
