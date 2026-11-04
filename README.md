@@ -227,6 +227,8 @@ Specify a license (e.g. MIT) before publishing.
 
 ## Contact / Contributing
 
+Branching, review and release rules are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 Open issues or submit PRs with:
 - Problem statement
 - Proposed change
