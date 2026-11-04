@@ -69,3 +69,6 @@ Thumbs.db
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+# Private notes (commands, how-tos), kept on the developer machine only
+/docs-private/
