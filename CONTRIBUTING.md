@@ -9,7 +9,7 @@
 | `feature/FKB-<n>-short-name` | One change, cut from `develop`. | - |
 | `hotfix/FKB-<n>-short-name` | Urgent production fix, cut from `main`. | - |
 
-`main` and `develop` are protected: no direct push, CI must pass, at least one review.
+`main` and `develop` are protected: no direct push, CI must pass, and every PR is reviewed and validated by a maintainer before it is merged (the number of approvals is not enforced, because agents open PRs with a maintainer account).
 
 ## Daily flow
 
