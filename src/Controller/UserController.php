@@ -12,6 +12,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\User;
 use App\Entity\Profile;
+use Symfony\Component\ExpressionLanguage\Expression;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class UserController extends AbstractController
 {
@@ -35,10 +37,8 @@ class UserController extends AbstractController
         $user->setEmail($data['email']);
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
+        $user->setRole('user');
 
-        if (isset($data['role'])) {
-            $user->setRole($data['role']);
-        }
         $profile = new Profile();
         $profile->setFirstName($data['firstname'] ?? '');
         $profile->setUser($user);
@@ -55,6 +55,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/api/users', name: 'list_users', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function getAllUsers(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $this->logger->error('HELLO From the backend YOLO!!');
@@ -65,6 +66,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/api/users/{id}', name: 'get_user', methods: ['GET'])]
+    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId() == subject'), subject: 'id')]
     public function getUserById(int $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
@@ -76,6 +78,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/api/users/{id}', name: 'delete_user', methods: ['DELETE'])]
+    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId() == subject'), subject: 'id')]
     public function deleteUser(int $id, EntityManagerInterface $em): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);

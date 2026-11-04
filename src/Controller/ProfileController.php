@@ -11,10 +11,12 @@ use App\Entity\Profile;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\ProfilePhotoStorage;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ProfileController extends AbstractController
 {
     #[Route('/api/profiles', name: 'list_profiles', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function getAllProfiles(EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $profiles = $em->getRepository(Profile::class)->findAll();
