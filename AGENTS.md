@@ -14,6 +14,6 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first: branches, PR size, release flow. 
 
 ## Working rules
 
-- One autonomous change per PR, revertable alone. Base branch: `develop` (`main` only for a hotfix).
+- One autonomous change per PR, revertable alone. Base branch: always `develop`, including hotfixes and configuration changes. Never open a PR to `main` from a work branch.
 - Never commit secrets or `.env` values. Never push to `main` or `develop` directly.
 - Do not use cherry-pick to move work between `develop` and `main`.
