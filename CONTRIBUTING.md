@@ -37,9 +37,17 @@
 - A migration must work on a copy of production data before it is merged to `main` (staging is for that).
 - Never edit a migration that has reached `main`; add a new one.
 
+## Testing: TDD is required for the API
+
+- Any change of API behaviour (route, access rule, validation, serialization) starts with a failing test, then the minimum code to pass, then refactor.
+- A bug fix starts with a test that reproduces it.
+- Commit the failing test (`test: ...`) before the code that fixes it when practical; reviewers read the history for this.
+- Exempt: documentation, pure configuration, behaviour-neutral renames, schema-only migrations. No need to retrofit untouched legacy code.
+- Tests live in `tests/Unit` and `tests/Integration`. Agents follow the same rules: see [AGENTS.md](AGENTS.md).
+
 ## PR checklist
 
 - [ ] One autonomous change; can be reverted alone
-- [ ] Tests added or updated, CI green
+- [ ] Test written first (red, then green); CI green
 - [ ] Migration included if the schema changes
 - [ ] No secret or `.env` value committed
