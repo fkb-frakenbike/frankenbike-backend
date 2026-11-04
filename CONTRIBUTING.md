@@ -4,10 +4,10 @@
 
 | Branch | Role | Deploys to |
 |---|---|---|
-| `main` | What runs in production. Only receives release merges and hotfixes. | PROD |
+| `main` | What runs in production. Only ever receives `develop` through a release PR. Never target it from a work branch. | PROD |
 | `develop` | Integration branch. Everything on it must be shippable. | STAGING |
 | `feature/FKB-<n>-short-name` | One change, cut from `develop`. | - |
-| `hotfix/FKB-<n>-short-name` | Urgent production fix, cut from `main`. | - |
+| `hotfix/FKB-<n>-short-name` | Urgent fix: same as a feature branch, cut from `develop`. | - |
 
 `main` and `develop` are protected: no direct push, CI must pass, and every PR is reviewed and validated by a maintainer before it is merged (the number of approvals is not enforced, because agents open PRs with a maintainer account).
 
@@ -25,11 +25,15 @@
 2. Merge it with a **merge commit**. Never squash it, never cherry-pick: both rewrite commit ids, `develop` and `main` then diverge and the next release conflicts.
 3. To undo a release: `git revert -m 1 <merge-commit>` (one command, whole release).
 4. Merging only part of `develop` is not a release: keep unfinished work out of `develop`, or behind a feature flag.
+5. `main` never holds work that `develop` lacks. The only extra commit it carries is the release merge commit, which has no content of its own.
 
-## Hotfix
+## Urgent fix (hotfix) and configuration changes
 
-1. Cut `hotfix/...` from `main`, PR to `main`, merge commit or squash.
-2. Immediately merge `main` back into `develop` so the fix is not lost and the branches do not diverge.
+Everything goes through `develop`, including urgent fixes and pure configuration:
+
+1. Cut `hotfix/...` (or `feature/...`) from `develop`, PR to `develop`, squash merge.
+2. Once it is validated on staging, release at once with a `develop` -> `main` PR.
+3. Never open a PR to `main` from a work branch. `develop` must always be shippable (nothing unvalidated stays on it), so a release can leave at any moment.
 
 ## Database migrations
 
