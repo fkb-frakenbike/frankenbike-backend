@@ -1,0 +1,67 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(php bin/phpunit:*)",
+      "Bash(php vendor/bin/phpunit:*)",
+      "Bash(php vendor/bin/php-cs-fixer:*)",
+      "Bash(php bin/console debug:*)",
+      "Bash(php bin/console lint:*)",
+      "Bash(php bin/console cache:clear:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(composer require:*)",
+      "Bash(composer remove:*)",
+      "Bash(composer update:*)",
+      "Bash(php bin/console doctrine:migrations:migrate:*)",
+      "Bash(docker:*)"
+    ],
+    "deny": [
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./config/jwt/**)",
+      "Write(./.env*)",
+      "Edit(./.env*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(git commit -n:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(php bin/console doctrine:schema:drop:*)",
+      "Bash(php bin/console doctrine:database:drop:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/scripts/pre-edit-guard.sh", "timeout": 5 },
+          { "type": "command", "command": "bash .claude/scripts/pre-edit-branch-guard.sh", "timeout": 5 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/scripts/post-edit-php.sh", "timeout": 120 }
+        ]
+      }
+    ]
+  }
+}
