@@ -1,6 +1,33 @@
+# Logs go to stderr as one JSON object per line (read by `docker logs`).
+# No file in var/log: the container output is the single source.
 monolog:
   handlers:
     main:
       type: stream
-      path: '%kernel.logs_dir%/%kernel.environment%.log'
+      path: php://stderr
       level: debug
+      formatter: monolog.formatter.json
+
+when@prod:
+  monolog:
+    handlers:
+      main:
+        # Debug/info records are buffered per request and only written, with
+        # their context, when the request ends in an error; warnings always pass.
+        type: fingers_crossed
+        action_level: error
+        passthru_level: warning
+        excluded_http_codes: [404]
+        handler: nested
+      nested:
+        type: stream
+        path: php://stderr
+        level: debug
+        formatter: monolog.formatter.json
+
+when@test:
+  monolog:
+    handlers:
+      main:
+        # Keep test output quiet: only crashes reach stderr.
+        level: critical
