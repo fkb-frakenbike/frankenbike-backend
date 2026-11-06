@@ -20,3 +20,23 @@ flysystem:
                 client: 'app.r2_s3_client'
                 bucket: '%env(R2_BUCKET)%'
                 prefix: 'components'
+
+# Dev/test: images on the local disk (prod: Cloudflare R2, above).
+# Details and the R2_PUBLIC_BASE_URL to set: see README.md, "Local Image Storage".
+when@dev: &local_storage
+    flysystem:
+        storages:
+            profiles.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/profiles'
+            projects.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/project-covers'
+            components.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/components'
+
+when@test: *local_storage

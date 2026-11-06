@@ -16,6 +16,8 @@
 !.env.example
 sql/
 *.sql
+# Local uploads (dev/test storage on disk)
+/public/uploads/
 # Ignore log files
 logs/
 *.log

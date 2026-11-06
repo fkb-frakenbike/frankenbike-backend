@@ -163,6 +163,17 @@ Run tests:
 vendor/bin/phpunit
 ```
 
+### Local Image Storage
+
+In `dev` and `test`, uploaded images (profile photos, project covers, components) are written to the local disk instead of Cloudflare R2; only production uses R2.
+
+- **Where:** `public/uploads/<folder>/<key>`. The path is built from the project directory, so it works on any machine and inside Docker. The folders are created on first use. `public/uploads/` is git-ignored: every contributor has their own local images.
+- **URLs:** public URLs are built from `R2_PUBLIC_BASE_URL`. Set it in your `.env` to `http://localhost:8787/uploads`, otherwise the stored URLs will not point at the local files.
+- **Serving:** the PHP built-in server used by `docker-compose` (`-t public`) serves `/uploads/...` as static files. Behind another web server, make sure `public/uploads` is served.
+- **Tests:** `dev` and `test` share the same folder for now.
+- **Docker on Linux:** files created in the container belong to the container user; `chown` them if you need to delete them from the host.
+- **Configuration:** `config/packages/flysystem.yaml`.
+
 ## Testing
 
 Current tests:
@@ -214,7 +225,11 @@ APP_SECRET=...
 DATABASE_URL="postgresql://fkb:fkb@postgres:5432/fkb_db?serverVersion=17&charset=utf8"
 CORS_ALLOW_ORIGIN="http://localhost:3000"
 JWT_PASSPHRASE=your_passphrase
+# Dev/test store images on disk (public/uploads), no R2 account needed:
+R2_PUBLIC_BASE_URL="http://localhost:8787/uploads"
 ```
+
+In `dev` and `test`, images are written to `public/uploads/` (git-ignored). Only production uses Cloudflare R2 and needs the `R2_*` variables.
 
 ## Deployment Notes
 
