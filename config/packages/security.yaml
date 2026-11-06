@@ -28,21 +28,29 @@ security:
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
 
-        # ── API side (stateless JWT) ─────────────
+        # ── API side: session + json_login + persistent remember_me ─────────
         api:
             pattern: ^/api
-            stateless: true
             provider: app_user_provider
-
-            # Lexik JWT authenticator
-            jwt: ~
-
+            entry_point: App\Security\ApiAuthenticationHandler
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
+                success_handler: App\Security\ApiAuthenticationHandler
+                failure_handler: App\Security\ApiAuthenticationHandler
             logout: true
-            # acts as entry point when no token is present
-            entry_point: jwt
             remember_me:
                 secret: '%kernel.secret%'
-                signature_properties: [ password ]
+                name: REMEMBERME
+                remember_me_parameter: rememberMe
+                lifetime: 2592000 # 30 days, sliding: the cookie is re-issued on every use
+                token_provider:
+                    doctrine: true # series + token in table rememberme_token, 60 s grace built in
+                secure: '%env(bool:COOKIE_SECURE)%'
+                samesite: '%env(COOKIE_SAMESITE)%'
+                domain: '%env(COOKIE_DOMAIN)%'
+                httponly: true
 
         main:
             lazy: true
@@ -75,7 +83,7 @@ security:
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
 
         # Every other /api/* call needs a valid JWT
-        - { path: ^/api,         roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api,         roles: IS_AUTHENTICATED }
 
         # HTML side
         - { path: ^/admin,       roles: ROLE_ADMIN }

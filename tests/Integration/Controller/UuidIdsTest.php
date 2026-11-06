@@ -5,9 +5,7 @@ namespace App\Tests\Integration\Controller;
 use App\Entity\Profile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\BrowserKit\Cookie;
 
 class UuidIdsTest extends WebTestCase
 {
@@ -20,6 +18,8 @@ class UuidIdsTest extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = static::createClient();
+        // what the front sends on every write (see CsrfGuardSubscriber)
+        $this->client->setServerParameter('HTTP_X_REQUESTED_WITH', 'fkb');
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
         $this->em->createQuery("DELETE FROM App\\Entity\\Profile p WHERE p.user IN (SELECT u.id FROM App\\Entity\\User u WHERE u.email LIKE 'uuid-%')")->execute();
         $this->em->createQuery("DELETE FROM App\\Entity\\User u WHERE u.email LIKE 'uuid-%'")->execute();
@@ -38,8 +38,7 @@ class UuidIdsTest extends WebTestCase
         $this->em->persist($user);
         $this->em->persist($profile);
         $this->em->flush();
-        $jwt = static::getContainer()->get(JWTTokenManagerInterface::class)->create($user);
-        $this->client->getCookieJar()->set(new Cookie('AUTH_TOKEN_COOKIE', $jwt));
+        $this->client->loginUser($user, 'api');
 
         return $user;
     }

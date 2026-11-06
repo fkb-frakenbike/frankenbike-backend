@@ -4,6 +4,13 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Hosting settings come from the environment; these defaults suit local dev
+    # (front on localhost:3000, API on localhost:8787: same site, so SameSite=Lax is enough).
+    env(SESSION_COOKIE_NAME): FKBSESSID
+    env(COOKIE_SAMESITE): lax
+    env(COOKIE_SECURE): 'false' # true as soon as the API is served over HTTPS
+    env(COOKIE_DOMAIN): ''
+    env(ALLOWED_ORIGIN_REGEX): '^http://localhost:(3000|8787)$'
 
 services:
     # no extra arguments usually needed
@@ -20,6 +27,14 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+        arguments:
+            - '@=service("doctrine.dbal.default_connection").getNativeConnection()'
+            - { lock_mode: 0 } # LOCK_NONE: parallel requests never wait on a row lock
+
+    App\EventSubscriber\CsrfGuardSubscriber:
+        arguments: { $allowedOriginRegex: '%env(ALLOWED_ORIGIN_REGEX)%' }
 
     app.r2_s3_client:
         class: Aws\S3\S3Client

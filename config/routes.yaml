@@ -4,3 +4,8 @@ controllers:
 
 api_login_check:
     path: /api/login_check
+
+# Handled by the json_login authenticator of the api firewall (no controller).
+api_login:
+    path: /api/login
+    methods: [POST]
