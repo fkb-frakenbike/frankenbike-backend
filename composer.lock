@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ced3a1ed72eed33a15f55243ef2ea657",
+    "content-hash": "e35c5d60e4ab030352afb2f179a09dd0",
     "packages": [
         {
             "name": "api-platform/doctrine-common",
@@ -8490,7 +8490,8 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-06-27T19:53:16+00:00"
+            "time": "2025-06-27T19:53:16+00:00",
+            "published-time": "2025-06-28T08:22:10+00:00"
         },
         {
             "name": "symfony/validator",
@@ -12570,7 +12571,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -12578,6 +12579,6 @@
         "ext-ctype": "*",
         "ext-iconv": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.11.0"
 }
