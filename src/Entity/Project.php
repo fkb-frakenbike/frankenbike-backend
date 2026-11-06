@@ -7,6 +7,8 @@ use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -17,9 +19,8 @@ class Project
 {
     #[Groups(['project:read', 'user:read', 'like:read','comment:read', 'component:read', 'project:list'])]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[Groups(['project:read'])]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'projects')]
@@ -68,6 +69,7 @@ class Project
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
         $this->comments = new ArrayCollection();
@@ -75,7 +77,7 @@ class Project
         $this->likes = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

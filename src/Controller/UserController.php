@@ -14,6 +14,8 @@ use App\Entity\User;
 use App\Entity\Profile;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Uid\Uuid;
 
 class UserController extends AbstractController
 {
@@ -65,9 +67,9 @@ class UserController extends AbstractController
         return new JsonResponse($jsonUsers, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/api/users/{id}', name: 'get_user', methods: ['GET'])]
-    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId() == subject'), subject: 'id')]
-    public function getUserById(int $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    #[Route('/api/users/{id}', name: 'get_user', requirements: ['id' => Requirement::UUID_V7], methods: ['GET'])]
+    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId().equals(subject)'), subject: 'id')]
+    public function getUserById(Uuid $id, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
         if (!$user) {
@@ -77,9 +79,9 @@ class UserController extends AbstractController
         return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/api/users/{id}', name: 'delete_user', methods: ['DELETE'])]
-    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId() == subject'), subject: 'id')]
-    public function deleteUser(int $id, EntityManagerInterface $em): JsonResponse 
+    #[Route('/api/users/{id}', name: 'delete_user', requirements: ['id' => Requirement::UUID_V7], methods: ['DELETE'])]
+    #[IsGranted(new Expression('is_granted("ROLE_ADMIN") or user.getId().equals(subject)'), subject: 'id')]
+    public function deleteUser(Uuid $id, EntityManagerInterface $em): JsonResponse 
     {
         $user = $em->getRepository(User::class)->find($id);
         if (!$user) {

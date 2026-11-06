@@ -43,7 +43,7 @@ class PromoteUserCommand extends Command
 
         // L'e-mail n'est pas journalisé : on trace l'id.
         $this->logger->info('Role utilisateur modifie', ['user_id' => $user->getId(), 'role' => $role]);
-        $io->success(sprintf('Role de l\'utilisateur %d: %s', $user->getId(), $role));
+        $io->success(sprintf('Role de l\'utilisateur %s: %s', $user->getId(), $role));
 
         return Command::SUCCESS;
     }

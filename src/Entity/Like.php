@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\LikeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: LikeRepository::class)]
@@ -13,9 +15,8 @@ class Like
 {
     #[Groups(['like:read', 'user:read', 'project:read'])]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[Groups(['like:read'])]
     #[ORM\ManyToOne(inversedBy: 'likes')]
@@ -36,10 +37,11 @@ class Like
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->created_at = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
@@ -13,9 +15,8 @@ class Comment
 {
     #[Groups(['comment:read', 'project:read', 'user:read'])]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[Groups(['comment:read'])]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
@@ -36,10 +37,11 @@ class Comment
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

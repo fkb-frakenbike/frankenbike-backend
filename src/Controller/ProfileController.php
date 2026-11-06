@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Request;
 use App\Service\ProfilePhotoStorage;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Uid\Uuid;
 
 class ProfileController extends AbstractController
 {
@@ -24,14 +26,14 @@ class ProfileController extends AbstractController
         return new JsonResponse($jsonProfiles, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/api/profiles/user/{userId}', name: 'get_profile_by_user', methods: ['GET'])]
-    public function getProfileByUserId(int $userId, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    #[Route('/api/profiles/user/{userId}', name: 'get_profile_by_user', requirements: ['userId' => Requirement::UUID_V7], methods: ['GET'])]
+    public function getProfileByUserId(Uuid $userId, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $this->getUser();
         if (!$user) {
             return new JsonResponse(['error' => 'Authentication required'], JsonResponse::HTTP_UNAUTHORIZED);
         }
-        if ($user->getId() !== $userId /* && !$this->isGranted('ROLE_ADMIN') */) {
+        if (!$user->getId()->equals($userId) /* && !$this->isGranted('ROLE_ADMIN') */) {
             return new JsonResponse(['error' => 'Not authorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
@@ -43,14 +45,14 @@ class ProfileController extends AbstractController
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/api/profiles/user/{userId}', name: 'update_profile_by_user', methods: ['PUT','PATCH'])]
-    public function updateProfileByUserId(int $userId, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
+    #[Route('/api/profiles/user/{userId}', name: 'update_profile_by_user', requirements: ['userId' => Requirement::UUID_V7], methods: ['PUT','PATCH'])]
+    public function updateProfileByUserId(Uuid $userId, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse 
     {
         $user = $this->getUser();
         if (!$user) {
             return new JsonResponse(['error' => 'Authentication required'], JsonResponse::HTTP_UNAUTHORIZED);
         }
-        if ($user->getId() !== $userId /* && !$this->isGranted('ROLE_ADMIN') */) {
+        if (!$user->getId()->equals($userId) /* && !$this->isGranted('ROLE_ADMIN') */) {
             return new JsonResponse(['error' => 'Not authorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
@@ -85,9 +87,9 @@ class ProfileController extends AbstractController
         return new JsonResponse($jsonProfile, JsonResponse::HTTP_OK, [], true);
     }
 
-    #[Route('/api/profiles/user/{userId}/photo', name: 'upload_profile_photo', methods: ['POST'])]
+    #[Route('/api/profiles/user/{userId}/photo', name: 'upload_profile_photo', requirements: ['userId' => Requirement::UUID_V7], methods: ['POST'])]
     public function uploadProfilePhoto(
-        int $userId,
+        Uuid $userId,
         Request $request,
         EntityManagerInterface $em,
         SerializerInterface $serializer,
@@ -95,7 +97,7 @@ class ProfileController extends AbstractController
     ): JsonResponse {
         // require auth
         $user = $this->getUser();
-        if (!$user || $user->getId() !== $userId) {
+        if (!$user || !$user->getId()->equals($userId)) {
             return new JsonResponse(['error' => 'Authentication required'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -131,7 +133,7 @@ class ProfileController extends AbstractController
 
         // key shape: profiles/<userId>/<componentId or ulid>.<ext>
         // for profile we’ll do: profiles/<userId>/<userId>.<ext> (one photo per user)
-        $key = sprintf('%d/%d.%s', $userId, $userId, $ext);
+        $key = sprintf('%s/%s.%s', $userId, $userId, $ext);
 
         // upload to R2
         $photoStorage->upload($file, $key);
