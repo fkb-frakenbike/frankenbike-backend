@@ -12,14 +12,23 @@ when@dev:
   monolog:
     handlers:
       main:
-        # The event and doctrine channels are very chatty at debug level (every
-        # listener call, every SQL query): keep only their warnings and errors.
-        channels: ["!event", "!doctrine"]
+        # The event, doctrine and security channels are very chatty at debug level
+        # (every listener call, every SQL query, every authenticator check): they
+        # get their own handlers below.
+        channels: ["!event", "!doctrine", "!security"]
       noisy_channels:
+        # Event and doctrine: only warnings and errors.
         type: stream
         path: php://stderr
         level: warning
         channels: ["event", "doctrine"]
+        formatter: monolog.formatter.json
+      security_channel:
+        # Security: keep the outcomes (login succeeded or failed) at info, drop the debug detail.
+        type: stream
+        path: php://stderr
+        level: info
+        channels: ["security"]
         formatter: monolog.formatter.json
 
 when@prod:
