@@ -41,6 +41,6 @@ class UserTest extends TestCase
         $roles = $user->getRoles();
 
         $this->assertContains('ROLE_ADMIN', $roles);
-        $this->assertCount(1, $roles);
+        $this->assertContains('ROLE_USER', $roles);
     }
 }

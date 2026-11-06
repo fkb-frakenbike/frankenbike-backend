@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\ProfileRepository;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
@@ -13,9 +15,8 @@ class Profile
 {
     #[Groups(['profile:read', 'user:read'])]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[ORM\OneToOne(targetEntity: User::class, inversedBy: 'profile')]
     #[ORM\JoinColumn(name: "user_id", referencedColumnName: "id", unique: true, nullable: false, onDelete: "CASCADE")]
@@ -51,11 +52,12 @@ class Profile
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTime();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

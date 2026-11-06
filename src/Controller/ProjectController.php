@@ -14,6 +14,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\ProjectPhotoStorage;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Uid\Uuid;
 
 class ProjectController extends AbstractController
 {
@@ -83,7 +85,7 @@ class ProjectController extends AbstractController
 
                 $ext = strtolower($file->guessExtension() ?: 'bin');
                 // key shape: project-covers/<projectId>/<projectId>.<ext>
-                $key = sprintf('%d/%d.%s', $project->getId(), $project->getId(), $ext);
+                $key = sprintf('%s/%s.%s', $project->getId(), $project->getId(), $ext);
 
                 $photoStorage->upload($file, $key);
                 $url = $photoStorage->publicUrl($key) ?? '';
@@ -134,18 +136,9 @@ class ProjectController extends AbstractController
         );
     }
 
-    #[Route('/api/projects/{id}', name: 'get_project', methods: ['GET'])]
-    public function getProject($id): JsonResponse
+    #[Route('/api/projects/{id}', name: 'get_project', requirements: ['id' => Requirement::UUID_V7], methods: ['GET'])]
+    public function getProject(Uuid $id): JsonResponse
     {
-        // Valide que $id est un entier (ou convertible)
-        if (!is_numeric($id)) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Invalid project ID',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $id = (int) $id; // cast explicite en int
 
         $project = $this->em->getRepository(Project::class)->find($id);
 
@@ -172,8 +165,8 @@ class ProjectController extends AbstractController
         return new JsonResponse($jsonProject, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/projects/{id}', name: 'update_project', methods: ['PUT', 'PATCH'])]
-    public function updateProject(Request $request, int $id): JsonResponse
+    #[Route('/api/projects/{id}', name: 'update_project', requirements: ['id' => Requirement::UUID_V7], methods: ['PUT', 'PATCH'])]
+    public function updateProject(Request $request, Uuid $id): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -195,7 +188,7 @@ class ProjectController extends AbstractController
             }
 
             // Make sure the user can only update their own projects (unless admin)
-            if ($project->getUser()->getId() !== $user->getId()) {
+            if (!$project->getUser()->getId()?->equals($user->getId())) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Not authorized'
@@ -233,8 +226,8 @@ class ProjectController extends AbstractController
     }
 
 
-    #[Route('/api/projects/{id}', name: 'delete_project', methods: ['DELETE'])]
-    public function deleteProject(int $id): JsonResponse
+    #[Route('/api/projects/{id}', name: 'delete_project', requirements: ['id' => Requirement::UUID_V7], methods: ['DELETE'])]
+    public function deleteProject(Uuid $id): JsonResponse
     {
         try {
             $user = $this->getUser();
@@ -256,7 +249,7 @@ class ProjectController extends AbstractController
             }
 
             // Make sure the user can only update their own projects (unless admin)
-            if ($project->getUser()->getId() !== $user->getId()) {
+            if (!$project->getUser()->getId()?->equals($user->getId())) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Not authorized'
@@ -280,9 +273,9 @@ class ProjectController extends AbstractController
         }
     }
 
-    #[Route('/api/projects/{id}/cover', name: 'upload_project_cover', methods: ['POST'])]
+    #[Route('/api/projects/{id}/cover', name: 'upload_project_cover', requirements: ['id' => Requirement::UUID_V7], methods: ['POST'])]
     public function uploadProjectCover(
-        int $id,
+        Uuid $id,
         Request $request,
         EntityManagerInterface $em,
         SerializerInterface $serializer,
@@ -293,7 +286,7 @@ class ProjectController extends AbstractController
 
         $project = $em->getRepository(Project::class)->find($id);
         if (!$project) return new JsonResponse(['error'=>'Project not found'], Response::HTTP_NOT_FOUND);
-        if ($project->getUser()?->getId() !== $user->getId()) {
+        if (!$project->getUser()?->getId()?->equals($user->getId())) {
             return new JsonResponse(['error'=>'Not authorized'], Response::HTTP_FORBIDDEN);
         }
 
@@ -313,7 +306,7 @@ class ProjectController extends AbstractController
         };
 
         // project-covers/<projectId>/<projectId>.<ext>
-        $key = sprintf('%d/%d.%s', $project->getId(), $project->getId(), $ext);
+        $key = sprintf('%s/%s.%s', $project->getId(), $project->getId(), $ext);
 
         $photoStorage->upload($file, $key);
         $url = $photoStorage->publicUrl($key) ?? '';
@@ -325,8 +318,8 @@ class ProjectController extends AbstractController
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/users/{userId}/projects', name: 'get_user_projects', methods: ['GET'])]
-    public function getProjectsByUser(int $userId, Request $request): JsonResponse
+    #[Route('/api/users/{userId}/projects', name: 'get_user_projects', requirements: ['userId' => Requirement::UUID_V7], methods: ['GET'])]
+    public function getProjectsByUser(Uuid $userId, Request $request): JsonResponse
     {
         $page = max(1, (int)$request->query->get('page', 1));
         $limit = max(1, min(100, (int)$request->query->get('limit', 10)));

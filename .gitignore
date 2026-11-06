@@ -13,10 +13,11 @@
 
 # Ignore .env files (DO NOT commit sensitive credentials)
 .env*
-# Ignore MySQL database files (Docker volumes)
-mysql_data/
+!.env.example
 sql/
 *.sql
+# Local uploads (dev/test storage on disk)
+/public/uploads/
 # Ignore log files
 logs/
 *.log
@@ -69,3 +70,6 @@ Thumbs.db
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+# Private notes (commands, how-tos), kept on the developer machine only
+/docs-private/

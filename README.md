@@ -7,12 +7,12 @@ Provides user accounts, JWT (cookie-based) authentication, projects, components,
 
 - PHP 8.3 / Symfony 7
 - Doctrine ORM / Migrations
-- MySQL 8
+- PostgreSQL 17
 - JWT (Lexik JWT Authentication Bundle) – cookie transport
 - API Platform (installed, partially used)
 - Nelmio CORS
 - Monolog 
-- Docker (runtime + MySQL)
+- Docker (runtime + PostgreSQL)
 - PHPUnit / BrowserKit / Foundry (test scaffolding)
 
 ## Main Features
@@ -124,7 +124,7 @@ Subsequent requests automatically include the auth cookie.
 
 ### Prerequisites
 - Docker & Docker Compose
-- Make sure ports `3306` (MySQL) & `8787` (PHP built-in server) are free.
+- Make sure ports `5432` (PostgreSQL) & `8787` (PHP built-in server) are free.
 
 ### Start Stack
 ```bash
@@ -160,8 +160,19 @@ php bin/console doctrine:migrations:migrate
 `.env.test` sets base DB name; Symfony appends `_test`.  
 Run tests:
 ```bash
-php bin/phpunit
+vendor/bin/phpunit
 ```
+
+### Local Image Storage
+
+In `dev` and `test`, uploaded images (profile photos, project covers, components) are written to the local disk instead of Cloudflare R2; only production uses R2.
+
+- **Where:** `public/uploads/<folder>/<key>`. The path is built from the project directory, so it works on any machine and inside Docker. The folders are created on first use. `public/uploads/` is git-ignored: every contributor has their own local images.
+- **URLs:** public URLs are built from `R2_PUBLIC_BASE_URL`. Set it in your `.env` to `http://localhost:8787/uploads`, otherwise the stored URLs will not point at the local files.
+- **Serving:** the PHP built-in server used by `docker-compose` (`-t public`) serves `/uploads/...` as static files. Behind another web server, make sure `public/uploads` is served.
+- **Tests:** the `test` environment writes to `var/test-uploads/` (git-ignored with `var/`), so test files never mix with your dev images.
+- **Docker on Linux:** files created in the container belong to the container user; `chown` them if you need to delete them from the host.
+- **Configuration:** `config/packages/flysystem.yaml`.
 
 ## Testing
 
@@ -206,13 +217,19 @@ Suggested next steps:
 
 ## Environment Variables (Sample)
 
+Start from the template: `cp .env.example .env` (the `.env` file is git-ignored).
+
 ```
 APP_ENV=dev
 APP_SECRET=...
-DATABASE_URL="mysql://root:root@mysql:3306/fkb_db"
+DATABASE_URL="postgresql://fkb:fkb@postgres:5432/fkb_db?serverVersion=17&charset=utf8"
 CORS_ALLOW_ORIGIN="http://localhost:3000"
 JWT_PASSPHRASE=your_passphrase
+# Dev/test store images on disk (public/uploads), no R2 account needed:
+R2_PUBLIC_BASE_URL="http://localhost:8787/uploads"
 ```
+
+In `dev` and `test`, images are written to `public/uploads/` (git-ignored). Only production uses Cloudflare R2 and needs the `R2_*` variables.
 
 ## Deployment Notes
 

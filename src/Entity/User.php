@@ -6,6 +6,8 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 
 // 1. Import these interfaces from Symfony Security
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -18,9 +20,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[Groups(['user:read', 'project:read'])]
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[Groups(['user:read', 'profile:read', 'project:read'])]
     #[ORM\Column(length: 255, unique: true)]
@@ -62,13 +63,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
         $this->projects = new ArrayCollection();
         $this->likes = new ArrayCollection();
         $this->comments = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -207,8 +209,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        // Convert 'admin' or 'user' => 'ROLE_ADMIN' or 'ROLE_USER'
-        return ['ROLE_' . strtoupper($this->getRole())];
+        $roles = ['ROLE_USER'];
+        if ($this->getRole() === 'admin') {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
+        return $roles;
     }
     public function eraseCredentials(): void 
     {

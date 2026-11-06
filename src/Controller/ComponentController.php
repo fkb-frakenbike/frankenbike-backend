@@ -17,6 +17,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Uid\Uuid;
 
 class ComponentController extends AbstractController
 {
@@ -26,8 +28,8 @@ class ComponentController extends AbstractController
         private LoggerInterface $logger,
     ){}
 
-    #[Route('/api/projects/{projectId}/components', methods: ['POST'])]
-    public function create(Request $req, int $projectId, ComponentPhotoStorage $photoStorage): JsonResponse
+    #[Route('/api/projects/{projectId}/components', requirements: ['projectId' => Requirement::UUID_V7], methods: ['POST'])]
+    public function create(Request $req, Uuid $projectId, ComponentPhotoStorage $photoStorage): JsonResponse
     {
         try {
             // 1. getUser, ensure authenticated
@@ -48,7 +50,7 @@ class ComponentController extends AbstractController
                     'message' => 'Project not found'
                 ], JsonResponse::HTTP_NOT_FOUND);
             }
-            if ($project->getUser()->getId() !== $user->getId()) {
+            if (!$project->getUser()->getId()?->equals($user->getId())) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Not authorized'
@@ -101,7 +103,7 @@ class ComponentController extends AbstractController
 
             $ext = strtolower($file->guessExtension() ?: 'bin');
             // key shape in R2: components/<projectId>/<componentId>.<ext>
-            $key = sprintf('%d/%d.%s', $projectId, $component->getId(), $ext);
+            $key = sprintf('%s/%s.%s', $projectId, $component->getId(), $ext);
 
             // upload to R2 (Flysystem)
             $photoStorage->upload($file, $key);
@@ -127,8 +129,8 @@ class ComponentController extends AbstractController
         }
     }
 
-    #[Route('/api/projects/{projectId}/components', methods: ['GET'])]
-    public function getByProjectId(int $projectId)
+    #[Route('/api/projects/{projectId}/components', requirements: ['projectId' => Requirement::UUID_V7], methods: ['GET'])]
+    public function getByProjectId(Uuid $projectId)
     {
         // 1. fetch project, check ownership
         $project = $this->em->getRepository(Project::class)->find($projectId);
@@ -162,17 +164,10 @@ class ComponentController extends AbstractController
         return new JsonResponse($jsonComponent, Response::HTTP_OK,[],true);
     }
 
-    #[Route('/api/components/{id}', methods: ['GET'])]
-    public function getComponent(int $id)
+    #[Route('/api/components/{id}', requirements: ['id' => Requirement::UUID_V7], methods: ['GET'])]
+    public function getComponent(Uuid $id)
     {
         try {
-            if (!is_numeric($id)) {
-                return new JsonResponse([
-                    'status' => 'error',
-                    'message' => 'Invalid component ID'
-                ], Response::HTTP_BAD_REQUEST);
-            }
-            $id = (int) $id;
 
             // fetch, check ownership, return
             $user= $this->getUser();
@@ -190,7 +185,7 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if ($component->getProject()->getUser()->getId() !== $user->getId()) {
+            if (!$component->getProject()->getUser()->getId()?->equals($user->getId())) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Not authorized'
@@ -211,8 +206,8 @@ class ComponentController extends AbstractController
 
     }
 
-    #[Route('/api/components/{id}', methods: ['PUT', 'PATCH'])]
-    public function updateComponent(Request $req, int $id)
+    #[Route('/api/components/{id}', requirements: ['id' => Requirement::UUID_V7], methods: ['PUT', 'PATCH'])]
+    public function updateComponent(Request $req, Uuid $id)
     {
         $user = $this->getUser();
         if(!$user){
@@ -232,7 +227,7 @@ class ComponentController extends AbstractController
         }
 
         // decode, update allowed fields, flush, return
-        if ($component->getProject()->getUser()->getId() !== $user->getId()) {
+        if (!$component->getProject()->getUser()->getId()?->equals($user->getId())) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Authentication required'
@@ -256,8 +251,8 @@ class ComponentController extends AbstractController
 
     }
 
-    #[Route('/api/components/{id}', methods: ['DELETE'])]
-    public function deleteComponent(int $id)
+    #[Route('/api/components/{id}', requirements: ['id' => Requirement::UUID_V7], methods: ['DELETE'])]
+    public function deleteComponent(Uuid $id)
     {
         try {
             // fetch, check ownership, remove, flush, return
@@ -275,7 +270,7 @@ class ComponentController extends AbstractController
                     'message' => 'Component not found'
                 ], Response::HTTP_NOT_FOUND);
             }
-            if ($component->getProject()->getUser()->getId() !== $user->getId()) {
+            if (!$component->getProject()->getUser()->getId()?->equals($user->getId())) {
                 return new JsonResponse([
                     'status' => 'error',
                     'message' => 'Authentication required'
