@@ -3,14 +3,14 @@ FROM php:8.3-fpm
 
 # 1) System deps required by PHP extensions you already use
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl unzip \
+    git curl unzip libpq-dev \
     libpng-dev libjpeg-dev libfreetype6-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# 2) Configure + build gd (jpeg + freetype) and pdo_mysql
+# 2) Configure + build gd (jpeg + freetype) and pdo_pgsql
 #    (Avoids common "gd configure" failures)
 RUN docker-php-ext-configure gd --with-jpeg --with-freetype \
- && docker-php-ext-install -j$(nproc) gd pdo_mysql
+ && docker-php-ext-install -j$(nproc) gd pdo_pgsql
 
 # 3) Increase PHP upload limits for local dev (so multipart images work)
 #    (Create the conf.d dir explicitly to avoid "No such file or directory")

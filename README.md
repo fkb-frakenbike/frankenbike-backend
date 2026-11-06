@@ -7,12 +7,12 @@ Provides user accounts, JWT (cookie-based) authentication, projects, components,
 
 - PHP 8.3 / Symfony 7
 - Doctrine ORM / Migrations
-- MySQL 8
+- PostgreSQL 17
 - JWT (Lexik JWT Authentication Bundle) – cookie transport
 - API Platform (installed, partially used)
 - Nelmio CORS
 - Monolog 
-- Docker (runtime + MySQL)
+- Docker (runtime + PostgreSQL)
 - PHPUnit / BrowserKit / Foundry (test scaffolding)
 
 ## Main Features
@@ -124,7 +124,7 @@ Subsequent requests automatically include the auth cookie.
 
 ### Prerequisites
 - Docker & Docker Compose
-- Make sure ports `3306` (MySQL) & `8787` (PHP built-in server) are free.
+- Make sure ports `5432` (PostgreSQL) & `8787` (PHP built-in server) are free.
 
 ### Start Stack
 ```bash
@@ -160,7 +160,7 @@ php bin/console doctrine:migrations:migrate
 `.env.test` sets base DB name; Symfony appends `_test`.  
 Run tests:
 ```bash
-php bin/phpunit
+vendor/bin/phpunit
 ```
 
 ## Testing
@@ -206,10 +206,12 @@ Suggested next steps:
 
 ## Environment Variables (Sample)
 
+Start from the template: `cp .env.example .env` (the `.env` file is git-ignored).
+
 ```
 APP_ENV=dev
 APP_SECRET=...
-DATABASE_URL="mysql://root:root@mysql:3306/fkb_db"
+DATABASE_URL="postgresql://fkb:fkb@postgres:5432/fkb_db?serverVersion=17&charset=utf8"
 CORS_ALLOW_ORIGIN="http://localhost:3000"
 JWT_PASSPHRASE=your_passphrase
 ```

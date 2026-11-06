@@ -13,8 +13,7 @@
 
 # Ignore .env files (DO NOT commit sensitive credentials)
 .env*
-# Ignore MySQL database files (Docker volumes)
-mysql_data/
+!.env.example
 sql/
 *.sql
 # Ignore log files
