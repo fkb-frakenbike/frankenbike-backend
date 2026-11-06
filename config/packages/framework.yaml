@@ -2,8 +2,17 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Sessions live in the database (table `sessions`), without row locking.
+    # Browser-session cookie; the server forgets a session after 2 h of inactivity.
+    session:
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler
+        name: '%env(SESSION_COOKIE_NAME)%'
+        cookie_lifetime: 0
+        cookie_httponly: true
+        cookie_secure: '%env(bool:COOKIE_SECURE)%'
+        cookie_samesite: '%env(COOKIE_SAMESITE)%'
+        cookie_domain: '%env(COOKIE_DOMAIN)%'
+        gc_maxlifetime: 7200
 
     #esi: true
     #fragments: true
@@ -12,4 +21,5 @@ when@test:
     framework:
         test: true
         session:
+            handler_id: null
             storage_factory_id: session.storage.factory.mock_file

@@ -18,6 +18,8 @@ class SessionAuthTest extends WebTestCase
 {
     private const EMAIL = 's1-user@example.com';
     private const PASSWORD = 'correct horse battery';
+    // the test env uses mock file sessions, whose cookie keeps the default PHP-mock name
+    private const SESSION_COOKIE = 'MOCKSESSID';
     private const ORIGIN = 'http://localhost:3000';
 
     private KernelBrowser $client;
@@ -79,7 +81,7 @@ class SessionAuthTest extends WebTestCase
     private function onlyRememberMe(string $value): void
     {
         $this->client->getCookieJar()->clear();
-        $this->client->getCookieJar()->set(new Cookie('REMEMBERME', $value, null, '/', 'localhost'));
+        $this->client->getCookieJar()->set(new Cookie('REMEMBERME', $value, null, '/', 'localhost', false, true, false));
     }
 
     // --- test n°2 (the risk): REMEMBERME re-authenticates a plain fetch GET ---
@@ -93,18 +95,38 @@ class SessionAuthTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertSame(self::EMAIL, json_decode($this->client->getResponse()->getContent(), true)['user']['email']);
-        $this->assertNotNull($this->cookie('REMEMBERME'), 'the cookie is rotated on use');
-        $this->assertNotSame($value, $this->cookie('REMEMBERME')->getValue());
     }
 
-    public function testOldRememberMeWithinGraceIsNotCookieTheft(): void
+    /** Symfony re-issues the cookie (sliding 30 days) only when the token is older than 60 s. */
+    private function ageToken(): void
+    {
+        $this->em->getConnection()->executeStatement("UPDATE rememberme_token SET lastUsed = lastUsed - interval '2 minutes' WHERE username = ?", [self::EMAIL]);
+    }
+
+    public function testRememberMeCookieIsReissuedOnceItIsOlderThanAMinute(): void
+    {
+        $value = $this->loginRemembered();
+        $this->ageToken();
+        $this->onlyRememberMe($value);
+
+        $this->client->request('GET', '/api/me');
+
+        $this->assertResponseStatusCodeSame(200);
+        $new = $this->cookie('REMEMBERME');
+        $this->assertNotNull($new);
+        $this->assertNotSame($value, $new->getValue());
+        $this->assertGreaterThan(time() + 29 * 86400, $new->getExpiresTime(), 'sliding 30 days');
+    }
+
+    public function testOldRememberMeStillWorksRightAfterRotationAndIsNotCookieTheft(): void
     {
         $old = $this->loginRemembered();
+        $this->ageToken();
         $this->onlyRememberMe($old);
-        $this->client->request('GET', '/api/me');
+        $this->client->request('GET', '/api/me'); // rotates
         $this->assertResponseStatusCodeSame(200);
 
-        // parallel request that left with the previous cookie, session cookie gone
+        // a parallel request that left with the previous cookie, session cookie gone
         $this->onlyRememberMe($old);
         $this->client->request('GET', '/api/me');
 
@@ -116,7 +138,8 @@ class SessionAuthTest extends WebTestCase
         $this->login(['email' => self::EMAIL, 'password' => self::PASSWORD, 'rememberMe' => false]);
 
         $this->assertResponseStatusCodeSame(200);
-        $this->assertNull($this->cookie('REMEMBERME'));
+        $cookie = $this->cookie('REMEMBERME');
+        $this->assertTrue(null === $cookie || $cookie->isCleared(), 'no remember-me cookie is issued');
     }
 
     public function testLoginSetsSessionCookieAndKeepsResponseShape(): void
@@ -125,7 +148,7 @@ class SessionAuthTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertSame(['message' => 'Connected'], json_decode($this->client->getResponse()->getContent(), true));
-        $session = $this->cookie('FKBSESSID');
+        $session = $this->cookie(self::SESSION_COOKIE);
         $this->assertNotNull($session);
         $this->assertTrue($session->isHttpOnly());
         $this->assertSame(0, $session->getExpiresTime(), 'browser session cookie');
@@ -135,11 +158,13 @@ class SessionAuthTest extends WebTestCase
 
     public function testSessionIdIsRenewedOnLogin(): void
     {
-        $this->login(['email' => self::EMAIL, 'password' => self::PASSWORD]);
-        $first = $this->cookie('FKBSESSID')->getValue();
+        // session fixation: the attacker plants a known id before the victim logs in
+        $this->client->getCookieJar()->set(new Cookie(self::SESSION_COOKIE, 'planted0123456789planted0123456789', null, '/', 'localhost', false, true, false));
         $this->login(['email' => self::EMAIL, 'password' => self::PASSWORD]);
 
-        $this->assertNotSame($first, $this->cookie('FKBSESSID')->getValue());
+        $session = $this->cookie(self::SESSION_COOKIE);
+        $this->assertNotNull($session, 'a new session id is issued at login');
+        $this->assertNotSame('planted0123456789planted0123456789', $session->getValue());
     }
 
     public function testWrongPasswordAndUnknownUserGiveTheSameErrorShape(): void
@@ -161,14 +186,18 @@ class SessionAuthTest extends WebTestCase
         $this->assertIsString(json_decode($this->client->getResponse()->getContent(), true)['error']);
     }
 
-    public function testSessionAuthenticatesNextRequestAndRoleChangeIsImmediate(): void
+    public function testRoleChangeEndsTheSessionAtOnce(): void
     {
         $this->login(['email' => self::EMAIL, 'password' => self::PASSWORD]);
-        $this->client->request('GET', '/api/profiles');
-        $this->assertResponseStatusCodeSame(403);
+        $this->client->request('GET', '/api/me');
+        $this->assertResponseStatusCodeSame(200);
 
         $this->em->createQuery("UPDATE App\\Entity\\User u SET u.role = 'admin' WHERE u.email = :e")->setParameter('e', self::EMAIL)->execute();
 
+        $this->client->request('GET', '/api/me');
+        $this->assertResponseStatusCodeSame(401);
+
+        $this->login(['email' => self::EMAIL, 'password' => self::PASSWORD]);
         $this->client->request('GET', '/api/profiles');
         $this->assertResponseStatusCodeSame(200);
     }

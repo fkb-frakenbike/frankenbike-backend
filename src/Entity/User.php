@@ -10,13 +10,14 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 
 // 1. Import these interfaces from Symfony Security
+use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: "users")]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
     #[Groups(['user:read', 'project:read'])]
     #[ORM\Id]
@@ -216,8 +217,46 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $roles;
     }
-    public function eraseCredentials(): void 
+    public function eraseCredentials(): void
     {
         $this->plainPassword = null; //a safe thing to do
+    }
+
+    /**
+     * The session stores the user: keep only what identifies it, never the relations, and
+     * only a checksum of the password hash.
+     */
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'password' => null === $this->password ? null : hash('crc32c', $this->password),
+            'role' => $this->role,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'];
+        $this->email = $data['email'];
+        $this->password = $data['password'];
+        $this->role = $data['role'];
+        $this->createdAt = new \DateTimeImmutable();
+        $this->projects = new ArrayCollection();
+        $this->likes = new ArrayCollection();
+        $this->comments = new ArrayCollection();
+    }
+
+    /**
+     * Called on every request with the user freshly loaded from the database. A changed role or
+     * password ends the session (401): stale rights never survive, the next login picks up the new ones.
+     */
+    public function isEqualTo(UserInterface $user): bool
+    {
+        return $user instanceof self
+            && $this->id?->equals($user->id)
+            && $this->role === $user->role
+            && ($this->password === $user->password || $this->password === hash('crc32c', (string) $user->password));
     }
 }
