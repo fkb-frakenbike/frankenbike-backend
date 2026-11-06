@@ -170,7 +170,7 @@ In `dev` and `test`, uploaded images (profile photos, project covers, components
 - **Where:** `public/uploads/<folder>/<key>`. The path is built from the project directory, so it works on any machine and inside Docker. The folders are created on first use. `public/uploads/` is git-ignored: every contributor has their own local images.
 - **URLs:** public URLs are built from `R2_PUBLIC_BASE_URL`. Set it in your `.env` to `http://localhost:8787/uploads`, otherwise the stored URLs will not point at the local files.
 - **Serving:** the PHP built-in server used by `docker-compose` (`-t public`) serves `/uploads/...` as static files. Behind another web server, make sure `public/uploads` is served.
-- **Tests:** `dev` and `test` share the same folder for now.
+- **Tests:** the `test` environment writes to `var/test-uploads/` (git-ignored with `var/`), so test files never mix with your dev images.
 - **Docker on Linux:** files created in the container belong to the container user; `chown` them if you need to delete them from the host.
 - **Configuration:** `config/packages/flysystem.yaml`.
 
