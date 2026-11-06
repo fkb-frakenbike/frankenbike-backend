@@ -8,6 +8,20 @@ monolog:
       level: debug
       formatter: monolog.formatter.json
 
+when@dev:
+  monolog:
+    handlers:
+      main:
+        # The event and doctrine channels are very chatty at debug level (every
+        # listener call, every SQL query): keep only their warnings and errors.
+        channels: ["!event", "!doctrine"]
+      noisy_channels:
+        type: stream
+        path: php://stderr
+        level: warning
+        channels: ["event", "doctrine"]
+        formatter: monolog.formatter.json
+
 when@prod:
   monolog:
     handlers:
