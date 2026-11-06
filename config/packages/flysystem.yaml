@@ -23,7 +23,7 @@ flysystem:
 
 # Dev/test: images on the local disk (prod: Cloudflare R2, above).
 # Details and the R2_PUBLIC_BASE_URL to set: see README.md, "Local Image Storage".
-when@dev: &local_storage
+when@dev:
     flysystem:
         storages:
             profiles.storage:
@@ -39,4 +39,19 @@ when@dev: &local_storage
                 options:
                     directory: '%kernel.project_dir%/public/uploads/components'
 
-when@test: *local_storage
+# Tests write under var/ so they never mix with your local dev images.
+when@test:
+    flysystem:
+        storages:
+            profiles.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/var/test-uploads/profiles'
+            projects.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/var/test-uploads/project-covers'
+            components.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/var/test-uploads/components'
