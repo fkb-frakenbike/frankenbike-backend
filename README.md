@@ -214,7 +214,11 @@ APP_SECRET=...
 DATABASE_URL="postgresql://fkb:fkb@postgres:5432/fkb_db?serverVersion=17&charset=utf8"
 CORS_ALLOW_ORIGIN="http://localhost:3000"
 JWT_PASSPHRASE=your_passphrase
+# Dev/test store images on disk (public/uploads), no R2 account needed:
+R2_PUBLIC_BASE_URL="http://localhost:8787/uploads"
 ```
+
+In `dev` and `test`, images are written to `public/uploads/` (git-ignored). Only production uses Cloudflare R2 and needs the `R2_*` variables.
 
 ## Deployment Notes
 

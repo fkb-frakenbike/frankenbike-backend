@@ -20,3 +20,23 @@ flysystem:
                 client: 'app.r2_s3_client'
                 bucket: '%env(R2_BUCKET)%'
                 prefix: 'components'
+
+# Local disk instead of R2 in dev/test. Set R2_PUBLIC_BASE_URL=http://localhost:8787/uploads
+# so the generated URLs point at public/uploads/<folder>/<key>.
+when@dev: &local_storage
+    flysystem:
+        storages:
+            profiles.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/profiles'
+            projects.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/project-covers'
+            components.storage:
+                adapter: 'local'
+                options:
+                    directory: '%kernel.project_dir%/public/uploads/components'
+
+when@test: *local_storage
