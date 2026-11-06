@@ -21,8 +21,8 @@ flysystem:
                 bucket: '%env(R2_BUCKET)%'
                 prefix: 'components'
 
-# Local disk instead of R2 in dev/test. Set R2_PUBLIC_BASE_URL=http://localhost:8787/uploads
-# so the generated URLs point at public/uploads/<folder>/<key>.
+# Dev/test: images on the local disk (prod: Cloudflare R2, above).
+# Details and the R2_PUBLIC_BASE_URL to set: see README.md, "Local Image Storage".
 when@dev: &local_storage
     flysystem:
         storages:
