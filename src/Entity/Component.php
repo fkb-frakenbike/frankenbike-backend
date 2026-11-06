@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Enum\ComponentCategory;
 use App\Enum\ComponentOrigin;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity]
@@ -13,9 +15,8 @@ class Component
 {
     #[Groups(['component:read', 'project:read'])]
     #[ORM\Id]
-    #[ORM\Column(type:"integer")]
-    #[ORM\GeneratedValue]
-    private ?int $id = null;
+    #[ORM\Column(type: UuidType::NAME)]
+    private ?Uuid $id = null;
 
     #[Groups(['component:read', 'project:read'])]
     #[ORM\Column(type:"string", length: 255)]
@@ -56,10 +57,11 @@ class Component
 
     public function __construct()
     {
+        $this->id = Uuid::v7();
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

@@ -11,12 +11,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Uid\Uuid;
 
 class TimelineController extends AbstractController
 {
-    #[Route('/api/timelines/{userId}', name: 'user_timeline', methods: ['GET'])]
+    #[Route('/api/timelines/{userId}', name: 'user_timeline', requirements: ['userId' => Requirement::UUID_V7], methods: ['GET'])]
     public function userTimeline(
-        int $userId,
+        Uuid $userId,
         EntityManagerInterface $em,
         SerializerInterface $serializer,
         ComponentPhotoStorage $componentPhotoStorage
@@ -27,7 +29,7 @@ class TimelineController extends AbstractController
             return new JsonResponse(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
-        if ($currentUser->getId() !== $userId /* && !$this->isGranted('ROLE_ADMIN') */) {
+        if (!$currentUser->getId()->equals($userId) /* && !$this->isGranted('ROLE_ADMIN') */) {
             return new JsonResponse(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
