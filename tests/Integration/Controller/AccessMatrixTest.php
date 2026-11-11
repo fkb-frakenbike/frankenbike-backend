@@ -5,15 +5,12 @@ namespace App\Tests\Integration\Controller;
 use App\Entity\Profile;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\BrowserKit\Cookie;
 
 /**
  * Matrice d'accès E1 : users / profiles.
- * Authentification : JWT Lexik posé dans le cookie AUTH_TOKEN_COOKIE
- * (le pare-feu stateless "api" n'accepte que le cookie, voir lexik_jwt_authentication.yaml).
+ * Authentification : session du pare-feu "api" (loginUser).
  */
 class AccessMatrixTest extends WebTestCase
 {
@@ -24,6 +21,8 @@ class AccessMatrixTest extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = static::createClient();
+        // what the front sends on every write (see CsrfGuardSubscriber)
+        $this->client->setServerParameter('HTTP_X_REQUESTED_WITH', 'fkb');
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
 
         $this->em->createQuery("DELETE FROM App\\Entity\\Profile p WHERE p.user IN (SELECT u.id FROM App\\Entity\\User u WHERE u.email LIKE 'e1-%')")->execute();
@@ -49,8 +48,7 @@ class AccessMatrixTest extends WebTestCase
 
     private function loginAs(User $user): void
     {
-        $jwt = static::getContainer()->get(JWTTokenManagerInterface::class)->create($user);
-        $this->client->getCookieJar()->set(new Cookie('AUTH_TOKEN_COOKIE', $jwt));
+        $this->client->loginUser($user, 'api');
     }
 
     public function testSignupIgnoresRoleFromBody(): void
