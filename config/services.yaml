@@ -36,6 +36,13 @@ services:
     App\EventSubscriber\CsrfGuardSubscriber:
         arguments: { $allowedOriginRegex: '%env(ALLOWED_ORIGIN_REGEX)%' }
 
+    App\EventSubscriber\AuthCookieSubscriber:
+        arguments:
+            $sessionCookieName: '%env(SESSION_COOKIE_NAME)%'
+            $secure: '%env(bool:COOKIE_SECURE)%'
+            $sameSite: '%env(COOKIE_SAMESITE)%'
+            $domain: '%env(COOKIE_DOMAIN)%'
+
     app.r2_s3_client:
         class: Aws\S3\S3Client
         arguments:
