@@ -39,7 +39,8 @@ security:
                 password_path: password
                 success_handler: App\Security\ApiAuthenticationHandler
                 failure_handler: App\Security\ApiAuthenticationHandler
-            logout: true
+            logout:
+                path: api_logout # invalidates the session, deletes the remember-me series, clears REMEMBERME
             remember_me:
                 secret: '%kernel.secret%'
                 name: REMEMBERME
